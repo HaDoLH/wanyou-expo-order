@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>萬友展場訂購單</title>
+  <!-- 不讓 Google 等搜尋引擎收錄 -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="images/logo-256.png">
+  <link rel="apple-touch-icon" href="images/logo-256.png">
+  <!-- 字型：思源黑體（繁中），讓各裝置看起來一致 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=9">
+</head>
+<body class="locked">
+
+  <!-- ===== 密碼門鎖（輸入正確才顯示訂購單；這台裝置會記住） ===== -->
+  <form id="lock" class="lock" autocomplete="off">
+    <img src="images/logo-256.png" alt="萬友咖啡" class="lock-logo">
+    <h1 class="lock-title">展場訂購單</h1>
+    <p class="lock-sub">請輸入密碼</p>
+    <input type="password" id="lockPass" placeholder="密碼" aria-label="密碼" autocomplete="current-password">
+    <p class="lock-err" id="lockErr" hidden>密碼錯誤，請再試一次</p>
+    <button type="submit" class="btn-primary lock-btn">進入</button>
+  </form>
+
+  <!-- ===== 頂部標題列 ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="images/logo-256.png" alt="萬友咖啡" class="brand-logo">
+      <div>
+        <div class="brand-title">展場訂購單</div>
+        <div class="brand-sub" id="expoName"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <!-- 待上傳提醒（有待上傳的訂單才會出現） -->
+      <button type="button" class="pending-btn" id="pendingBtn" hidden></button>
+      <button type="button" class="device-btn" id="deviceBtn" title="更換裝置代號"></button>
+    </div>
+  </header>
+
+  <!-- 步驟指示 -->
+  <nav class="steps" aria-label="步驟">
+    <span class="step" data-step="1"><b>1</b> 填寫訂單</span>
+    <span class="step-line"></span>
+    <span class="step" data-step="2"><b>2</b> 訂購明細</span>
+  </nav>
+
+  <!-- =========================================================
+       畫面一：填寫
+       ========================================================= -->
+  <main id="viewForm" class="view">
+
+    <!-- 第一部分：客戶資料 -->
+    <section class="card">
+      <h2 class="card-title"><span class="num">01</span>客戶資料</h2>
+      <div class="grid">
+        <div class="field">
+          <span>日期</span>
+          <!-- 只能選展期這幾天（在 products.js 的 EXPO_DATES 設定） -->
+          <div class="chips" id="cDate"></div>
+        </div>
+        <label class="field">
+          <span>訂購姓名 <em>*</em></span>
+          <input type="text" id="cName" autocomplete="off" placeholder="王小明／OO咖啡">
+        </label>
+        <label class="field">
+          <span>電話 <em>*</em></span>
+          <input type="tel" id="cPhone" autocomplete="off" placeholder="0912-345-678">
+        </label>
+        <div class="field">
+          <span>統一編號</span>
+          <!-- 右側 ✓／✗：輸入後自動檢查是否符合統編編碼規則 -->
+          <div class="tax-wrap">
+            <span class="tax-mark" id="taxMark" aria-live="polite"></span>
+            <input type="text" id="cTax" inputmode="numeric" autocomplete="off" placeholder="（選填）8 碼數字" aria-label="統一編號">
+          </div>
+        </div>
+        <label class="field span-2">
+          <span>收件地址</span>
+          <input type="text" id="cAddress" autocomplete="off" placeholder="縣市、區、路名門牌">
+        </label>
+        <div class="field">
+          <span>付款方式</span>
+          <div class="chips" id="cPayment"></div>
+          <!-- 選「其他」時才出現，可以自己寫（選填） -->
+          <input type="text" id="cPayOther" autocomplete="off" placeholder="請輸入付款資訊（選填）" hidden>
+        </div>
+        <label class="field">
+          <span>經手人員</span>
+          <select id="cStaff"></select>
+          <!-- 選「其他（自行輸入）」時才出現 -->
+          <input type="text" id="cStaffOther" autocomplete="off" placeholder="請輸入經手人員名字" hidden>
+        </label>
+        <label class="field span-2">
+          <span>備註</span>
+          <textarea id="cNote" rows="2" placeholder="例：希望週五前送達、需要分開出貨…"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <!-- 第二部分：商品列表 -->
+    <section class="card">
+      <h2 class="card-title"><span class="num">02</span>訂購商品</h2>
+      <p class="hint">以 5KG 為單位。超過整袋（箱）的公斤數會自動拆成「整袋價＋5KG 單價」，單價可以直接修改。</p>
+
+      <div id="itemList"></div>
+      <button type="button" class="btn-add" id="addItem">＋ 新增品項</button>
+
+      <!-- 商品備註：訂購單上沒有的商品 -->
+      <div class="sub-block">
+        <h3 class="sub-title">商品備註 <small>訂購單上沒有的商品，請在這裡登記</small></h3>
+        <div id="extraList"></div>
+        <button type="button" class="btn-add btn-add-sm" id="addExtra">＋ 新增其他商品</button>
+        <label class="field">
+          <span>備註說明</span>
+          <textarea id="extraNote" rows="2" placeholder="其他商品的說明（選填）"></textarea>
+        </label>
+      </div>
+
+      <!-- 運費 -->
+      <div class="sub-block">
+        <h3 class="sub-title">運費</h3>
+        <div class="toggle-row" id="shipRow">
+          <label class="check">
+            <input type="checkbox" id="shipOn">
+            <span id="shipLabel"></span>
+          </label>
+          <button type="button" class="link-btn" id="shipAuto" hidden>恢復自動</button>
+        </div>
+        <!-- 離島配送：勾選後運費改用填寫的報價 -->
+        <div class="toggle-row">
+          <label class="check">
+            <input type="checkbox" id="islandOn">
+            <span class="ship-fee">離島配送，需另外報價</span>
+          </label>
+          <label class="island-fee" id="islandFeeBox" hidden>
+            <span>運費 $</span>
+            <input type="number" id="islandFee" inputmode="numeric" placeholder="報價金額">
+            <small>未定可先空白（訂單顯示「另行報價」）</small>
+          </label>
+        </div>
+      </div>
+
+      <!-- 滿額贈 -->
+      <div class="sub-block">
+        <h3 class="sub-title">滿額贈品 <small id="giftHint"></small></h3>
+        <div id="giftList" class="gift-list"></div>
+        <button type="button" class="link-btn" id="giftAuto" hidden>恢復自動</button>
+      </div>
+    </section>
+
+    <!-- 底部固定總計列 -->
+    <div class="totalbar">
+      <div class="totalbar-inner">
+        <div class="totals">
+          <div><small>總重</small><b id="sumKg">0 KG</b></div>
+          <div><small>運費</small><b id="sumShip">$0</b></div>
+          <div class="grand"><small>總金額</small><b id="sumTotal">$0</b></div>
+        </div>
+        <div class="totalbar-actions">
+          <button type="button" class="btn-ghost" id="resetBtn">清空</button>
+          <button type="button" class="btn-primary" id="nextBtn">下一頁 →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- =========================================================
+       畫面二：訂購明細
+       ========================================================= -->
+  <main id="viewDetail" class="view" hidden>
+    <div class="detail-actions top">
+      <button type="button" class="btn-ghost" id="backBtn">← 上一頁修改</button>
+    </div>
+
+    <!-- 訂單本體（畫面上看到的版本） -->
+    <div class="sheet-wrap">
+      <div id="sheet" class="sheet"></div>
+    </div>
+
+    <div class="detail-actions">
+      <button type="button" class="btn-ghost" id="dlPng">下載圖片</button>
+      <button type="button" class="btn-ghost" id="dlPdf">下載 PDF</button>
+      <button type="button" class="btn-ghost" id="shareBtn">分享（LINE）</button>
+      <button type="button" class="btn-primary" id="finishBtn">完成訂單並上傳</button>
+    </div>
+    <div class="detail-actions">
+      <button type="button" class="link-btn" id="newBtn">開新訂單</button>
+    </div>
+  </main>
+
+  <!-- 產生圖片用的隱藏區（固定 800px 寬，讓每台裝置產出的圖都一樣） -->
+  <div id="renderBox" aria-hidden="true"></div>
+
+  <!-- 提示訊息 -->
+  <div id="toast" class="toast" role="status"></div>
+
+  <!-- 工具庫：html2canvas（網頁轉圖片）、jsPDF（產生 PDF） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="products.js?v=7"></script>
+  <script src="app.js?v=9"></script>
+</body>
+</html>

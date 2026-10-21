@@ -1,0 +1,412 @@
+/* =========================================================
+   萬友展場訂購單 — 樣式
+   白底簡約、訊息清楚為主；萬友深藍只當重點色
+   ========================================================= */
+
+/* ---------- 色票與尺寸（像設計稿的「色票面板」） ---------- */
+:root {
+  color-scheme: light;
+  --ink: #1f2430;        /* 主要文字 */
+  --ink-2: #5b6170;      /* 次要文字 */
+  --ink-3: #9096a3;      /* 提示文字 */
+  --line: #e4e6eb;       /* 分隔線 */
+  --line-2: #d0d4db;     /* 輸入框框線 */
+  --bg: #ffffff;
+  --bg-soft: #f6f7f9;    /* 淺灰底 */
+  --brand: #394253;      /* 萬友深藍 */
+  --brand-soft: #eef0f4;
+  --warn: #c8402f;       /* 錯誤／待填 */
+  --warn-soft: #fdf0ee;
+  --ok: #2f7d4f;
+  --blue: #1a5fd0;       /* 滿額贈金額 */
+  --radius: 10px;
+  --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+}
+[hidden] { display: none !important; }
+button { font: inherit; cursor: pointer; }
+/* iOS：輸入框字小於 16px 會自動放大畫面，所以一律 16px */
+input, select, textarea { font: inherit; font-size: 16px; color: var(--ink); }
+
+/* ---------- 密碼門鎖 ---------- */
+.lock { display: none; }
+body.locked > :not(.lock):not(#toast) { display: none !important; } /* 鎖住時只顯示門鎖 */
+body.locked .lock {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  max-width: 340px; margin: 0 auto; padding: 18vh 16px 40px; text-align: center;
+}
+.lock-logo { width: 72px; height: 72px; border-radius: 50%; }
+.lock-title { margin: 6px 0 0; font-size: 22px; letter-spacing: .06em; }
+.lock-sub { margin: 0; color: var(--ink-2); font-size: 14px; }
+.lock input { text-align: center; letter-spacing: .1em; }
+.lock-err { margin: 0; color: var(--warn); font-size: 14px; font-weight: 500; }
+.lock-btn { width: 100%; }
+
+/* ---------- 頂部 ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: rgba(255, 255, 255, .96);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-logo { width: 36px; height: 36px; border-radius: 50%; }
+.brand-title { font-weight: 700; font-size: 17px; letter-spacing: .04em; }
+.brand-sub { font-size: 12px; color: var(--ink-2); }
+.topbar-right { display: flex; gap: 8px; align-items: center; }
+.device-btn, .pending-btn {
+  border: 1px solid var(--line-2); background: #fff; color: var(--ink-2);
+  border-radius: 999px; padding: 4px 12px; font-size: 13px; white-space: nowrap;
+}
+.pending-btn { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); }
+
+/* ---------- 步驟 ---------- */
+.steps {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 16px 4px; font-size: 14px; color: var(--ink-3);
+}
+.step b {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 4px;
+  border-radius: 50%; border: 1px solid currentColor; font-size: 12px;
+}
+.step.on { color: var(--brand); font-weight: 500; }
+.step.on b { background: var(--brand); border-color: var(--brand); color: #fff; }
+.step-line { width: 40px; height: 1px; background: var(--line-2); }
+
+/* ---------- 版面 ---------- */
+.view {
+  max-width: 880px; margin: 0 auto;
+  padding: 12px 16px 140px; /* 下方留空給固定總計列 */
+}
+.card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px; background: #fff;
+}
+.card-title {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 16px; font-size: 19px; font-weight: 700;
+}
+.card-title .num { font-size: 13px; color: var(--ink-3); font-weight: 500; letter-spacing: .1em; }
+.hint { margin: -8px 0 14px; font-size: 13px; color: var(--ink-2); }
+
+/* ---------- 表單欄位 ---------- */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.span-2 { grid-column: span 2; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span { font-size: 13px; color: var(--ink-2); }
+.field em { color: var(--warn); font-style: normal; }
+input[type=text], input[type=tel], input[type=date], input[type=number], select, textarea {
+  width: 100%; min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-2); border-radius: 8px; background: #fff;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+textarea { resize: vertical; }
+/* iPhone Safari：日期欄內建最小寬度又置中，會撐出卡片 → 取消內建外觀、靠左 */
+input[type=date] {
+  -webkit-appearance: none; appearance: none;
+  display: block; min-width: 0; max-width: 100%; text-align: left;
+}
+input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.invalid, .invalid:focus { border-color: var(--warn) !important; background: var(--warn-soft) !important; }
+.err-msg { display: block; margin-top: 6px; color: var(--warn); font-size: 13px; font-weight: 500; }
+
+/* 統一編號：右側 ✓ 綠／✗ 紅 */
+.tax-wrap { position: relative; }
+.tax-wrap input { padding-right: 44px; }
+.tax-mark {
+  position: absolute; right: 10px; top: 11px; z-index: 1;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: none; place-items: center;
+  font-size: 15px; font-weight: 700; color: #fff; line-height: 1;
+}
+.tax-mark.ok { display: grid; background: var(--ok); }
+.tax-mark.bad { display: grid; background: var(--warn); }
+.err-msg::before { content: '⚠ '; }
+/* 拿掉數字欄位右邊的上下小箭頭，畫面比較乾淨 */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* 付款方式小按鈕 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 40px; padding: 6px 14px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: #fff; color: var(--ink-2);
+}
+.chip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* 日期：2×2 平均分配，按鈕填滿格子（iOS 按鈕不會自動撐開，文字才不會溢出疊到隔壁） */
+#cDate { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#cDate .chip { width: 100%; padding: 6px 4px; white-space: nowrap; text-align: center; }
+
+/* ---------- 商品列 ---------- */
+.item {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 10px;
+}
+.item-head { display: flex; align-items: center; gap: 10px; }
+.item-no {
+  flex: none; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 12px;
+  background: var(--bg-soft); color: var(--ink-2);
+}
+.item-select { flex: 1; min-width: 0; }
+.item-note { margin: 6px 0 0 34px; font-size: 12px; color: var(--ink-3); }
+.item-note:empty { display: none; }
+
+/* 公斤數 −／＋ */
+.stepper {
+  flex: none; display: flex; align-items: center;
+  border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden;
+}
+.step-btn {
+  width: 40px; height: 42px; border: 0; background: var(--bg-soft);
+  font-size: 20px; color: var(--ink);
+}
+.step-btn:active { background: var(--line); }
+.kg-input {
+  width: 58px !important; min-height: 42px !important; border: 0 !important; border-radius: 0 !important;
+  text-align: right; padding: 0 2px !important; box-shadow: none !important;
+}
+.kg-unit { padding: 0 8px 0 2px; font-size: 14px; color: var(--ink-2); }
+
+.icon-btn {
+  flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--ink-3); font-size: 22px; line-height: 1;
+}
+.icon-btn:hover { background: var(--bg-soft); color: var(--warn); }
+
+/* 拆袋明細 */
+.lines { margin: 8px 0 0 34px; }
+.lines:empty { display: none; }
+.line {
+  display: grid; grid-template-columns: 1fr auto 96px; align-items: center; gap: 12px;
+  padding: 6px 10px; border-radius: 8px; background: var(--bg-soft);
+}
+.line + .line { margin-top: 6px; }
+.line-spec { font-size: 14px; }
+.line-price { display: flex; align-items: center; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.price-input { width: 90px !important; min-height: 36px !important; padding: 4px 8px !important; text-align: right; }
+.price-input.edited { border-color: #d9a441; background: #fff9ec; } /* 手動改過的單價用淺黃標示 */
+.line-sub { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.line.need { background: var(--warn-soft); }
+.line.need .price-input { border-color: var(--warn); }
+.line.need .price-input::placeholder { color: var(--warn); }
+
+.btn-add {
+  width: 100%; min-height: 46px;
+  border: 1px dashed var(--line-2); border-radius: var(--radius);
+  background: #fff; color: var(--brand); font-weight: 500;
+}
+.btn-add:hover { border-color: var(--brand); background: var(--brand-soft); }
+.btn-add-sm { min-height: 40px; margin-bottom: 12px; }
+
+/* ---------- 子區塊（備註、運費、贈品） ---------- */
+.sub-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.sub-title { margin: 0 0 10px; font-size: 16px; font-weight: 700; }
+.sub-title small { margin-left: 6px; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+
+.extra {
+  display: grid; grid-template-columns: 1fr 110px 140px 88px 36px; gap: 8px; align-items: center;
+  margin-bottom: 8px;
+}
+.extra-num { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.extra-num input { text-align: right; padding: 9px 8px; }
+
+.toggle-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 40px; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--brand); flex: none; }
+.check small { color: var(--ink-2); }
+.gift-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+.gift { padding: 4px 10px; border-radius: 8px; }
+.gift-min { color: var(--blue); }          /* 滿額金額用顯眼的藍色 */
+.ship-fee { color: var(--warn); font-weight: 700; } /* 加收運費用紅字 */
+#shipRow.off { opacity: .4; }                       /* 選了離島，一般運費變灰 */
+.island-fee { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); }
+.island-fee input { width: 130px; text-align: right; }
+.island-fee small { width: 100%; color: var(--ink-3); }
+.sh-total .sh-ship-note { text-align: left; font-size: 13px; color: var(--warn); padding-top: 0; }
+.gift.reached { background: var(--brand-soft); }
+.link-btn {
+  border: 0; background: none; padding: 6px 0; color: var(--brand);
+  text-decoration: underline; text-underline-offset: 3px; font-size: 14px;
+}
+
+/* ---------- 底部總計列 ---------- */
+.totalbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: rgba(255, 255, 255, .97);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, .04);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.totalbar-inner {
+  max-width: 880px; margin: 0 auto; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.totals { display: flex; gap: 22px; align-items: baseline; }
+.totals small { display: block; font-size: 12px; color: var(--ink-3); }
+.totals b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.totals .grand b { font-size: 24px; font-weight: 700; color: var(--brand); }
+.totalbar-actions { display: flex; gap: 8px; }
+
+.btn-primary, .btn-ghost {
+  min-height: 46px; padding: 0 20px; border-radius: 8px; font-weight: 500; white-space: nowrap;
+}
+.btn-primary { border: 1px solid var(--brand); background: var(--brand); color: #fff; }
+.btn-primary:hover { background: #2c3341; }
+.btn-ghost { border: 1px solid var(--line-2); background: #fff; color: var(--ink); }
+.btn-ghost:hover { border-color: var(--brand); }
+button:disabled { opacity: .55; cursor: wait; }
+
+/* ---------- 畫面二：明細 ---------- */
+#viewDetail { padding-bottom: 40px; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0; }
+.detail-actions.top { justify-content: flex-start; margin-top: 4px; }
+.sheet-wrap { overflow-x: auto; }
+.sheet {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px; background: #fff;
+}
+
+/* 訂單排版（畫面、圖片、PDF 共用） */
+.sh { color: var(--ink); font-family: var(--font); }
+.sh-head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 2px solid var(--brand); }
+.sh-logo { width: 54px; height: 54px; border-radius: 50%; }
+.sh-title h1 { margin: 0; font-size: 21px; letter-spacing: .03em; }
+.sh-meta { margin-top: 2px; font-size: 14px; color: var(--ink-2); display: flex; flex-wrap: wrap; column-gap: 20px; }
+.sh-meta span { white-space: nowrap; }
+.t-id-inline { display: none; } /* 只有手機版才顯示（編號併到品名上方） */
+.sh-meta b { color: var(--ink); }
+
+.sh table { width: 100%; border-collapse: collapse; }
+.sh-info { margin: 14px 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+.sh-info tbody { display: contents; }
+.sh-info tr { display: flex; border-bottom: 1px solid var(--line); }
+.sh-info tr.full { grid-column: span 2; }
+.sh-info th { flex: none; width: 76px; padding: 7px 0; text-align: left; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+.sh-info td { padding: 7px 0; font-size: 15px; word-break: break-all; }
+
+.sh-items { margin-top: 6px; font-size: 14px; }
+.sh-items th {
+  padding: 8px 6px; background: var(--bg-soft); text-align: left;
+  font-weight: 500; font-size: 13px; color: var(--ink-2); border-bottom: 1px solid var(--line-2);
+}
+.sh-items td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.sh-items .t-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sh-items .t-id { white-space: nowrap; color: var(--ink-2); }
+.sh-items .t-spec { white-space: nowrap; }
+.sh-items .t-extra td { background: #fffbf2; }
+
+.sh-note { margin-top: 12px; padding: 10px 12px; background: #fffbf2; border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
+.sh-note b, .sh-gift b { display: block; font-size: 12px; color: var(--ink-2); font-weight: 500; margin-bottom: 2px; }
+
+/* 贈品／備註在上，總計在下（上下排） */
+.sh-sum { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.sh-sum-left { display: flex; flex-direction: column; gap: 10px; }
+.sh-gift { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
+.sh-total { width: 100% !important; font-size: 15px; }
+.sh-total th { text-align: left; font-weight: 400; color: var(--ink-2); padding: 5px 0; }
+.sh-total td { text-align: right; padding: 5px 0; font-variant-numeric: tabular-nums; }
+.sh-total .grand th, .sh-total .grand td { border-top: 2px solid var(--brand); padding-top: 10px; }
+.sh-total .grand td { font-size: 22px; font-weight: 700; color: var(--brand); }
+
+.sh-terms { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+.sh-terms ul { margin: 4px 0 0; padding-left: 18px; }
+.sh-foot { margin-top: 10px; font-size: 13px; color: var(--ink-2); text-align: right; }
+
+/* ---------- 產生圖片／PDF 用：A4 直式（794×1123px = 210×297mm）----------
+   放在畫面外看不到的地方，每台裝置產出的版面都一樣 */
+#renderBox { position: fixed; left: -10000px; top: 0; width: 794px; }
+#renderBox .sheet {
+  width: 794px; min-height: 1123px;   /* 至少一整頁 A4，內容多會自動變長、PDF 分頁 */
+  padding: 56px 56px 48px; border: 0; border-radius: 0;
+  display: flex; flex-direction: column;
+}
+#renderBox .sh { flex: 1; display: flex; flex-direction: column; }
+/* A4 版字放大一點，印出來比較好讀 */
+#renderBox .sh-title h1 { font-size: 24px; }
+#renderBox .sh-meta { font-size: 15px; }
+#renderBox .sh-info td { font-size: 16px; }
+#renderBox .sh-info th { font-size: 14px; }
+#renderBox .sh-items { font-size: 15px; }
+#renderBox .sh-items th { font-size: 14px; }
+#renderBox .sh-gift, #renderBox .sh-note { font-size: 15px; }
+#renderBox .sh-total { font-size: 16px; }
+#renderBox .sh-total .grand td { font-size: 26px; }
+/* 訂購詳閱和經手人員固定在頁面底部 */
+#renderBox .sh-terms { margin-top: auto; font-size: 14px; }
+#renderBox .sh-sum { margin-bottom: 24px; }
+
+/* ---------- 提示訊息 ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 100px; z-index: 50;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 10px;
+  background: var(--ink); color: #fff; font-size: 15px; text-align: center;
+  transition: opacity .2s, transform .2s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* =========================================================
+   手機版（寬度 640px 以下）：改成單欄
+   ========================================================= */
+@media (max-width: 640px) {
+  .card { padding: 16px 14px; }
+  .grid { grid-template-columns: 1fr; }
+  .span-2 { grid-column: auto; }
+  .brand-sub { display: none; }
+
+  .item-head { flex-wrap: wrap; }
+  .item-select { flex-basis: calc(100% - 70px); }
+  .stepper { margin-left: 34px; }
+  .del-item { margin-left: auto; }
+  .lines, .item-note { margin-left: 0; }
+  .line { grid-template-columns: 1fr auto; }
+  .line-spec { grid-column: span 2; }
+
+  .extra { grid-template-columns: 1fr 1fr 36px; }
+  .extra > input[data-f=name] { grid-column: span 2; }
+  .extra .line-sub { grid-column: span 2; }
+  .extra .del-extra { grid-row: 1; grid-column: 3; }
+
+  .gift-list { grid-template-columns: 1fr; }
+
+  .totals { gap: 14px; }
+  .totals > div:nth-child(2) { display: none; } /* 手機上運費藏起來，省空間 */
+  .totals .grand b { font-size: 20px; }
+  #resetBtn { display: none; }
+  .btn-primary, .btn-ghost { padding: 0 14px; }
+
+  /* 只改「畫面上」的明細；產生圖片用的 #renderBox 維持 800px 電腦版排版 */
+  #sheet { padding: 16px 12px; }
+  #sheet .sh-info { grid-template-columns: 1fr; }
+  #sheet .sh-info tr.full { grid-column: auto; }
+  #sheet .sh-sum { flex-direction: column; }
+  #sheet .sh-total { width: 100% !important; }
+  #sheet .sh-items { font-size: 13px; }
+  #sheet .sh-items th:first-child, #sheet .sh-items td.t-id { display: none; }
+  #sheet .t-id-inline { display: block; font-size: 12px; color: var(--ink-3); }
+  #sheet .sh-items td, #sheet .sh-items th { padding: 8px 4px; }
+  #sheet .sh-title h1 { font-size: 18px; }
+  #sheet .sh-logo { width: 44px; height: 44px; }
+  .detail-actions > button { flex: 1 1 45%; }
+}
