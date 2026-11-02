@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="locked">
 
@@ -39,7 +39,9 @@
     </div>
     <div class="topbar-right">
       <!-- 待上傳提醒（有待上傳的訂單才會出現） -->
+      <span class="net-dot" id="netDot" hidden>離線中</span>
       <button type="button" class="pending-btn" id="pendingBtn" hidden></button>
+      <button type="button" class="device-btn" id="listBtn">訂單列表</button>
       <button type="button" class="device-btn" id="deviceBtn" title="更換裝置代號"></button>
     </div>
   </header>
@@ -179,6 +181,9 @@
       <button type="button" class="btn-ghost" id="backBtn">← 上一頁修改</button>
     </div>
 
+    <!-- 訂單狀態（送單後才出現） -->
+    <div id="statusBanner" class="status-banner" role="status" hidden></div>
+
     <!-- 訂單本體（畫面上看到的版本） -->
     <div class="sheet-wrap">
       <div id="sheet" class="sheet"></div>
@@ -188,11 +193,27 @@
       <button type="button" class="btn-ghost" id="dlPng">下載圖片</button>
       <button type="button" class="btn-ghost" id="dlPdf">下載 PDF</button>
       <button type="button" class="btn-ghost" id="shareBtn">分享（LINE）</button>
-      <button type="button" class="btn-primary" id="finishBtn">完成訂單並上傳</button>
+      <button type="button" class="btn-primary" id="finishBtn">送單到櫃台</button>
+      <button type="button" class="btn-primary" id="copyBtn" hidden>複製成新單</button>
     </div>
     <div class="detail-actions">
+      <button type="button" class="link-btn" id="cancelBtn" hidden>取消訂單</button>
       <button type="button" class="link-btn" id="newBtn">開新訂單</button>
     </div>
+  </main>
+
+  <!-- =========================================================
+       訂單列表：全部訂單的即時狀態
+       ========================================================= -->
+  <main id="viewList" class="view" hidden>
+    <div class="detail-actions top">
+      <button type="button" class="btn-ghost" id="listBack">← 回到填單</button>
+    </div>
+    <div class="list-filters">
+      <input type="text" id="listSearch" placeholder="搜尋姓名、電話、訂單編號" aria-label="搜尋訂單" autocomplete="off">
+      <select id="listStaff" aria-label="依經手人員篩選"></select>
+    </div>
+    <div id="orderList"></div>
   </main>
 
   <!-- 產生圖片用的隱藏區（固定 800px 寬，讓每台裝置產出的圖都一樣） -->
@@ -204,7 +225,8 @@
   <!-- 工具庫：html2canvas（網頁轉圖片）、jsPDF（產生 PDF） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="products.js?v=7"></script>
-  <script src="app.js?v=9"></script>
+  <script src="products.js?v=8"></script>
+  <script src="sync.js?v=1"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

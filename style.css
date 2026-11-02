@@ -287,10 +287,50 @@ button:disabled { opacity: .55; cursor: wait; }
   padding: 28px; background: #fff;
 }
 
+/* 訂單狀態說明（明細頁上方） */
+.status-banner {
+  margin-bottom: 12px; padding: 10px 14px; border-radius: 8px;
+  background: var(--brand-soft); color: var(--brand); font-weight: 500; font-size: 15px;
+}
+.status-banner.paid { background: #e9f5ee; color: var(--ok); }
+.status-banner.returned, .status-banner.void { background: var(--warn-soft); color: var(--warn); }
+.status-banner.cancelled { background: var(--bg-soft); color: var(--ink-2); }
+
+/* 訂單列表 */
+.list-filters { display: grid; grid-template-columns: 1fr 160px; gap: 8px; margin-bottom: 12px; }
+.order-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px;
+  padding: 10px 12px; margin-bottom: 8px; text-align: left;
+  border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink);
+}
+.order-row:hover { border-color: var(--brand); }
+.order-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.order-main small { color: var(--ink-2); font-size: 13px; }
+.order-total { font-weight: 700; font-variant-numeric: tabular-nums; }
+.order-badge {
+  flex: none; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 500;
+  background: var(--brand-soft); color: var(--brand);
+}
+.order-badge.paid { background: #e9f5ee; color: var(--ok); }
+.order-badge.returned, .order-badge.void { background: var(--warn-soft); color: var(--warn); }
+.order-badge.cancelled { background: var(--bg-soft); color: var(--ink-2); }
+.device-btn.alert { border-color: var(--warn); color: var(--warn); }
+.net-dot { font-size: 13px; font-weight: 500; color: var(--warn); white-space: nowrap; }
+
 /* 訂單排版（畫面、圖片、PDF 共用） */
 .sh { color: var(--ink); font-family: var(--font); }
 .sh-head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 2px solid var(--brand); }
 .sh-logo { width: 54px; height: 54px; border-radius: 50%; }
+/* 印章：像櫃台蓋上去的章，稍微轉一點角度 */
+.sh-stamp {
+  flex: none; margin-left: auto; padding: 4px 12px; text-align: center;
+  border: 3px solid var(--warn); border-radius: 8px; color: var(--warn);
+  font-size: 22px; font-weight: 700; letter-spacing: .1em; line-height: 1.25;
+  transform: rotate(-6deg);
+}
+.sh-stamp small { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.sh-stamp.void, .sh-stamp.cancelled { border-color: var(--ink-3); color: var(--ink-2); }
+.sh-tag { flex: none; margin-left: auto; font-size: 14px; font-weight: 500; color: var(--ink-2); }
 .sh-title h1 { margin: 0; font-size: 21px; letter-spacing: .03em; }
 .sh-meta { margin-top: 2px; font-size: 14px; color: var(--ink-2); display: flex; flex-wrap: wrap; column-gap: 20px; }
 .sh-meta span { white-space: nowrap; }

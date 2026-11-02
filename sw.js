@@ -3,14 +3,15 @@
    比喻：像把網頁「影印一份」放在平板裡，沒網路就看影印本。
    ⚠ 每次更新網站檔案，要把下面的版本號 +1，平板才會抓新版
    ========================================================= */
-const CACHE = 'wyx-v12';
+const CACHE = 'wyx-v14';
 
 const FILES = [
   './',
   './index.html',
-  './style.css?v=10',
-  './products.js?v=7',
-  './app.js?v=9',
+  './style.css?v=11',
+  './products.js?v=8',
+  './app.js?v=11',
+  './sync.js?v=1',
   './manifest.webmanifest',
   './images/logo-256.png',
   './images/logo-512.png',
@@ -36,7 +37,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return; // 上傳訂單（POST）不經過這裡
-  if (req.url.includes('script.google.com')) return;
+  // 雲端連線直接通過，不能被快取攔住（即時連線是長時間開著的）
+  if (/script.google.com|googleapis.com/.test(req.url)) return;
   e.respondWith(
     fetch(req)
       .then((res) => {

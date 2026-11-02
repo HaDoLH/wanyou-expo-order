@@ -98,7 +98,7 @@ function newExtra() {
 function blankState() {
   return {
     orderNo: '',          // 訂單編號（進到第二頁才產生）
-    finished: false,      // 是否已按過「完成訂單」
+    sent: null,           // 已送到雲端：{ version 版本, hash 送出時的內容 }
     customer: {
       date: defaultDate(), name: '', phone: '', tax: '',
       address: '', payment: '', payOther: '', staff: '', staffOther: '', note: '',
@@ -684,11 +684,40 @@ function buildOrder() {
 }
 
 /** 訂單的 HTML（畫面、圖片、PDF 共用同一份排版） */
+/** 訂單上的付款方式：付款後以櫃台為準，「匯款」不給客人看，顯示成「其他」 */
+function paidMethodText(o) {
+  const c = o.customer;
+  const rec = liveOf(o.no);
+  const paid = rec && rec.paid;
+  if (!paid) return paymentText(c);
+  if (paid.method === '付現') return '現金';
+  if (paid.method === '匯款') return (c.payOther || '').trim() || PAY_OTHER;
+  return paid.method;
+}
+
+/** 訂單右上角的印章（比喻：櫃台蓋的「已付款」章） */
+function stampHTML(o) {
+  const rec = liveOf(o.no);
+  if (!rec) return '';
+  if (rec.status === 'pending' || rec.status === 'returned') {
+    return `<div class="sh-tag">${STATUS_LABEL[rec.status]}</div>`;
+  }
+  const at = rec.status === 'paid' ? timeText(rec.paid.at) : timeText(rec.updatedAt);
+  return `<div class="sh-stamp ${rec.status}">${STATUS_LABEL[rec.status]}<small>${at}</small></div>`;
+}
+
+/** 時間顯示：11/14 14:30 */
+function timeText(ms) {
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function sheetHTML(o) {
   const c = o.customer;
   const info = [
     ['訂購姓名', c.name], ['電話', c.phone],
-    ['統一編號', c.tax], ['付款方式', paymentText(c)],
+    ['統一編號', c.tax], ['付款方式', paidMethodText(o)],
     ['收件地址', c.address, true],
   ];
   const itemRows = o.rows.map((r) => `
@@ -716,6 +745,7 @@ function sheetHTML(o) {
         <h1>${esc(EXPO.title)}</h1>
         <div class="sh-meta"><span>訂單編號 <b>${esc(o.no)}</b></span><span>日期 ${esc(c.date)}</span></div>
       </div>
+      ${stampHTML(o)}
     </div>
 
     <table class="sh-info">
@@ -756,23 +786,29 @@ function sheetHTML(o) {
 
 let currentOrder = null; // 目前明細頁顯示的訂單
 
-function showForm() {
-  $('#viewDetail').hidden = true;
-  $('#viewForm').hidden = false;
-  setStep(1);
+/** 切換畫面：form 填寫／detail 明細／list 訂單列表 */
+function showView(name) {
+  $('#viewForm').hidden = name !== 'form';
+  $('#viewDetail').hidden = name !== 'detail';
+  $('#viewList').hidden = name !== 'list';
+  document.querySelector('.steps').hidden = name === 'list';
+  if (name !== 'list') setStep(name === 'form' ? 1 : 2);
   window.scrollTo(0, 0);
 }
+
+const showForm = () => showView('form');
 
 function showDetail() {
   if (!validate()) return;
   if (!state.orderNo) { state.orderNo = makeOrderNo(); save(); }
-  currentOrder = buildOrder();
-  $('#sheet').innerHTML = sheetHTML(currentOrder);
+  renderDetail(buildOrder());
+}
+
+function renderDetail(order) {
+  currentOrder = order;
+  $('#sheet').innerHTML = sheetHTML(order);
   paintFinish();
-  $('#viewForm').hidden = true;
-  $('#viewDetail').hidden = false;
-  setStep(2);
-  window.scrollTo(0, 0);
+  showView('detail');
 }
 
 function setStep(n) {
@@ -780,15 +816,37 @@ function setStep(n) {
     s.classList.toggle('on', Number(s.dataset.step) <= n));
 }
 
-/** 「完成訂單」按鈕的文字（完成後變成已完成） */
+/** 比對內容有沒有改過（編號、時間不算） */
+const orderHash = (o) => JSON.stringify({ ...o, no: '', createdAt: '' });
+
+/** 明細頁的狀態說明與按鈕，依訂單狀態變化 */
 function paintFinish() {
+  const rec = liveOf(state.orderNo);
+  const status = rec ? rec.status : '';
+  const locked = ['paid', 'void', 'cancelled'].includes(status);
+  const changed = !!state.sent && currentOrder && orderHash(currentOrder) !== state.sent.hash;
   const b = $('#finishBtn');
-  const rec = store.get(KEY.orders, []).find((o) => o.no === state.orderNo);
-  if (state.finished && rec) {
-    b.textContent = rec.uploaded ? '✓ 已上傳（再傳一次）' : '已存本機，重新上傳';
-  } else {
-    b.textContent = '完成訂單並上傳';
-  }
+
+  const notes = {
+    pending: '已送到櫃台，等待客人結帳',
+    returned: `櫃台退回的原因：${(rec && rec.returnReason) || '請確認訂單'}`,
+    paid: '這張單不能再修改。要改單請櫃台作廢後重開',
+    void: `${rec && rec.voidReason ? `${rec.voidReason}。` : ''}可以複製成新單`,
+    cancelled: '可以複製成新單',
+  };
+  const banner = $('#statusBanner');
+  banner.hidden = !status;
+  banner.className = `status-banner ${status}`;
+  banner.textContent = status ? `${STATUS_LABEL[status]}｜${notes[status]}` : '';
+
+  b.hidden = locked;
+  b.disabled = status === 'pending' && !changed;
+  b.textContent = !state.sent ? '送單到櫃台'
+    : status === 'pending' ? (changed ? '更新送單' : '✓ 已送單')
+      : '修改後重新送單';
+  $('#backBtn').hidden = locked;
+  $('#cancelBtn').hidden = !['pending', 'returned'].includes(status);
+  $('#copyBtn').hidden = !['void', 'cancelled'].includes(status);
 }
 
 /* ---------------------------------------------------------
@@ -849,6 +907,7 @@ async function busy(btn, fn) {
   btn.disabled = true; btn.textContent = '處理中…';
   try { await fn(); } catch (e) { console.error(e); toast('發生問題：' + e.message, 4000); }
   btn.disabled = false; btn.textContent = label;
+  if (!$('#viewDetail').hidden) paintFinish(); // 按鈕文字與狀態依最新訂單重畫
 }
 
 async function downloadPng() {
@@ -878,19 +937,171 @@ async function shareImage() {
   }
 }
 
-/* ---------- 本機訂單紀錄 & 上傳雲端 ---------- */
+/* ---------- 送單到櫃台 ----------
+   本機留一份紀錄（KEY.orders）：uploaded=false 代表還沒送到雲端，
+   斷線時排隊，網路恢復自動補送。 */
 
-/** 存（或更新）一筆訂單到本機紀錄 */
-function saveRecord(order, uploaded) {
+let live = {}; // 雲端全部訂單，用編號查
+
+// 只有自己送出過的單才讀雲端狀態；還沒送出的單就算編號撞到別人，也不會被當成對方那張
+const liveOf = (no) => (state.sent && state.orderNo === no ? live[no] : null);
+
+function saveRecord(rec) {
   const list = store.get(KEY.orders, []);
-  const i = list.findIndex((o) => o.no === order.no);
-  const rec = { no: order.no, uploaded, order };
+  const i = list.findIndex((o) => o.no === rec.no);
   if (i >= 0) list[i] = rec; else list.push(rec);
   store.set(KEY.orders, list);
   paintPending();
 }
 
-/** 把一筆訂單做成 PDF 傳到 Google 雲端（成功回傳 true） */
+/** 把本機紀錄送進雲端，回傳實際的編號與版本 */
+async function pushRecord(r) {
+  const c = r.order.customer;
+  const body = () => ({
+    order: r.order, draft: r.draft, total: r.order.total,
+    name: c.name, phone: c.phone, staff: staffText(c),
+  });
+  if (r.sent) {
+    const res = await Sync.update(r.no, r.sent.version, body());
+    return { no: r.no, version: res.version };
+  }
+  // 新單：編號被別台用走就換下一號，不會蓋掉別人的單
+  for (let i = 0; i < 30; i++) {
+    const now = Date.now();
+    const created = await Sync.create({
+      ...body(), no: r.no, status: 'pending', version: 1, returnReason: '',
+      device: store.get(KEY.device, ''), createdAt: now, updatedAt: now,
+    });
+    if (created) return { no: r.no, version: 1 };
+    const seen = r.no;
+    r.no = makeOrderNo();
+    r.order = { ...r.order, no: r.no };
+    r.draft = { ...r.draft, orderNo: r.no };
+    removeRecord(seen);
+  }
+  throw new Error('訂單編號重複太多次');
+}
+
+function removeRecord(no) {
+  store.set(KEY.orders, store.get(KEY.orders, []).filter((o) => o.no !== no));
+}
+
+/** 送單成功後，讓目前畫面的單跟上實際編號與版本 */
+function afterPush(r, res) {
+  saveRecord({ ...r, no: res.no, uploaded: true });
+  if (state.orderNo !== r.previousNo) return;
+  state.orderNo = res.no;
+  state.sent = { version: res.version, hash: orderHash(r.order) };
+  save();
+  if (!$('#viewDetail').hidden) renderDetail(r.order);
+}
+
+/** 按下「送單到櫃台」 */
+async function sendOrder() {
+  currentOrder = buildOrder();
+  const r = {
+    no: currentOrder.no, previousNo: currentOrder.no, uploaded: false, order: currentOrder,
+    sent: state.sent, draft: { ...state, sent: null },
+  };
+  saveRecord(r);
+  try {
+    afterPush(r, await pushRecord(r));
+    toast('✓ 已送到櫃台');
+  } catch (e) {
+    console.error(e);
+    if (e.syncCode) {
+      removeRecord(r.no);
+      toast(syncErrorText(e), 4500);
+    } else {
+      toast('網路不穩，訂單先排隊，有網路會自動送出', 4500);
+    }
+  }
+  paintFinish();
+}
+
+/** 取消訂單（還沒付款才可以） */
+async function cancelOrder() {
+  if (!confirm('確定要取消這張訂單嗎？')) return;
+  try { await Sync.cancel(state.orderNo, live[state.orderNo].version); toast('已取消訂單'); }
+  catch (e) { toast(syncErrorText(e), 4500); }
+}
+
+/** 把已作廢／取消的單複製成新單（內容帶回填單頁，客人不用重填） */
+function copyOrder() {
+  const { customer } = state;
+  state = {
+    ...state, orderNo: '', sent: null,
+    customer: { ...customer, date: defaultDate() },
+  };
+  save();
+  initForm();
+  showForm();
+  toast('已複製內容，修改後請重新送單');
+}
+
+/** 目前有沒有填到一半、還沒送出的單 */
+function hasUnsentDraft() {
+  return !state.sent && (state.customer.name.trim() || state.items.some((it) => it.pid));
+}
+
+/** 從列表打開一張單：待付款／已退回可以修改，其他只能看 */
+function openOrder(no) {
+  const rec = live[no];
+  if (hasUnsentDraft() && !confirm('目前填寫中的訂單還沒送出，確定要離開嗎？')) return;
+  state = { ...blankState(), ...rec.draft, orderNo: no, sent: { version: rec.version, hash: orderHash(rec.order) } };
+  save();
+  initForm();
+  renderDetail(rec.order);
+}
+
+/* ---------- 訂單列表 ---------- */
+
+function renderList() {
+  const staff = $('#listStaff').value;
+  const q = $('#listSearch').value.trim();
+  const all = Object.values(live).sort((a, b) => b.createdAt - a.createdAt);
+
+  // 經手人員篩選：只列出有訂單的人，選過的保留
+  const names = [...new Set(all.map((o) => o.staff).filter(Boolean))];
+  $('#listStaff').innerHTML = '<option value="">全部人員</option>' +
+    names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('#listStaff').value = names.includes(staff) ? staff : '';
+
+  const shown = all.filter((o) => (!$('#listStaff').value || o.staff === staff)
+    && (!q || [o.no, o.name, o.phone].some((v) => String(v).includes(q))));
+  $('#orderList').innerHTML = shown.map((o) => `
+    <button type="button" class="order-row" data-no="${esc(o.no)}">
+      <span class="order-badge ${o.status}">${STATUS_LABEL[o.status]}</span>
+      <span class="order-main"><b>${esc(o.name)}</b><small>${esc(o.no)}｜${esc(o.staff) || '—'}</small></span>
+      <span class="order-total">$${money(o.total)}</span>
+    </button>`).join('') || '<p class="hint">目前沒有訂單</p>';
+}
+
+function paintListBtn() {
+  const n = Object.values(live).filter((o) => o.status === 'returned').length;
+  $('#listBtn').textContent = n ? `訂單列表（${n} 筆退回）` : '訂單列表';
+  $('#listBtn').classList.toggle('alert', n > 0);
+}
+
+/** 收到雲端最新資料 */
+function onOrders(list) {
+  live = Object.fromEntries(list.map((o) => [o.no, o]));
+  paintListBtn();
+  if (!$('#viewList').hidden) renderList();
+  const rec = live[state.orderNo];
+  if (rec && state.sent) {
+    // 櫃台退回會讓版本 +1，跟上才能重新送單
+    if (rec.status === 'returned') state.sent.version = rec.version;
+    // 只換內容、不跳頁，別人更新時畫面不會捲回頂端
+    if (!$('#viewDetail').hidden) {
+      if (rec.status !== 'pending') currentOrder = rec.order;
+      $('#sheet').innerHTML = sheetHTML(currentOrder);
+      paintFinish();
+    }
+  }
+}
+
+/** 把一筆訂單做成 PDF 傳到 Google 雲端（Code.gs 部署後，改在付款後呼叫） */
 async function uploadOrder(order) {
   if (!UPLOAD.url) return false;
   const canvas = await renderCanvas(order);
@@ -907,53 +1118,40 @@ async function uploadOrder(order) {
   return true;
 }
 
-/** 完成訂單：先存本機，再試著上傳 */
-async function finishOrder() {
-  currentOrder = buildOrder();
-  state.finished = true; save();
-  saveRecord(currentOrder, false);
-  if (!UPLOAD.url) {
-    toast('已存在本機（雲端上傳還沒設定）', 3500);
-    paintFinish();
-    return;
-  }
-  try {
-    await uploadOrder(currentOrder);
-    saveRecord(currentOrder, true);
-    toast('✓ 訂單已上傳到雲端資料夾');
-  } catch (e) {
-    console.error(e);
-    toast('網路不穩，訂單先存在本機，稍後會自動補傳', 4000);
-  }
-  paintFinish();
-}
-
-/** 待上傳的訂單：顯示數量、可以一鍵補傳 */
+/** 排隊中的訂單：顯示數量、可以一鍵補送 */
 function paintPending() {
   const n = store.get(KEY.orders, []).filter((o) => !o.uploaded).length;
   const b = $('#pendingBtn');
-  b.hidden = !(n && UPLOAD.url);
-  b.textContent = `⚠ 待上傳 ${n} 筆`;
+  b.hidden = !n;
+  b.textContent = `⚠ 待送出 ${n} 筆`;
 }
 
 let retrying = false;
 async function retryPending(silent) {
-  if (retrying || !UPLOAD.url) return;
+  if (retrying) return;
   const pending = store.get(KEY.orders, []).filter((o) => !o.uploaded);
   if (!pending.length) return;
   retrying = true;
   let ok = 0;
   for (const rec of pending) {
-    try { await uploadOrder(rec.order); saveRecord(rec.order, true); ok++; } catch (e) { console.error(e); }
+    try {
+      rec.previousNo = rec.no;
+      afterPush(rec, await pushRecord(rec));
+      ok++;
+    } catch (e) {
+      console.error(e);
+      if (e.syncCode) { removeRecord(rec.no); toast(syncErrorText(e), 4500); }
+    }
   }
   retrying = false;
-  paintFinish();
-  if (!silent || ok) toast(ok === pending.length ? `✓ 已補傳 ${ok} 筆` : `補傳 ${ok}/${pending.length} 筆，其餘稍後再試`, 3500);
+  paintPending();
+  if (!$('#viewDetail').hidden) paintFinish();
+  if (!silent || ok) toast(ok === pending.length ? `✓ 已補送 ${ok} 筆` : `補送 ${ok}/${pending.length} 筆，其餘稍後再試`, 3500);
 }
 
 /** 開新訂單 */
 function newOrder(ask = true) {
-  if (ask && !state.finished && !confirm('這張訂單還沒按「完成訂單」，確定要清空開新的嗎？')) return;
+  if (ask && hasUnsentDraft() && !confirm('這張訂單還沒送到櫃台，確定要清空開新的嗎？')) return;
   const { staff, staffOther } = state.customer; // 經手人員保留
   state = blankState();
   Object.assign(state.customer, { staff, staffOther });
@@ -1010,8 +1208,18 @@ function init() {
   $('#dlPng').addEventListener('click', (e) => busy(e.currentTarget, downloadPng));
   $('#dlPdf').addEventListener('click', (e) => busy(e.currentTarget, downloadPdf));
   $('#shareBtn').addEventListener('click', (e) => busy(e.currentTarget, shareImage));
-  $('#finishBtn').addEventListener('click', (e) => busy(e.currentTarget, finishOrder));
+  $('#finishBtn').addEventListener('click', (e) => busy(e.currentTarget, sendOrder));
+  $('#cancelBtn').addEventListener('click', (e) => busy(e.currentTarget, cancelOrder));
+  $('#copyBtn').addEventListener('click', copyOrder);
   $('#pendingBtn').addEventListener('click', (e) => busy(e.currentTarget, () => retryPending(false)));
+  $('#listBtn').addEventListener('click', () => { renderList(); showView('list'); });
+  $('#listBack').addEventListener('click', showForm);
+  $('#listStaff').addEventListener('change', renderList);
+  $('#listSearch').addEventListener('input', renderList);
+  $('#orderList').addEventListener('click', (e) => {
+    const row = e.target.closest('.order-row');
+    if (row) openOrder(row.dataset.no);
+  });
   $('#deviceBtn').addEventListener('click', () => {
     store.set(KEY.device, '');
     getDevice(); paintDevice();
@@ -1021,9 +1229,11 @@ function init() {
   paintPending();
   setStep(1);
 
-  // 網路恢復時自動補傳
-  window.addEventListener('online', () => retryPending(true));
-  if (navigator.onLine) setTimeout(() => retryPending(true), 3000);
+  // 網路恢復時自動補送，並顯示連線狀態
+  const paintNet = () => { $('#netDot').hidden = navigator.onLine; };
+  window.addEventListener('online', () => { paintNet(); retryPending(true); });
+  window.addEventListener('offline', paintNet);
+  paintNet();
 
   // 離線用：註冊 service worker（本機用 file:// 開時會略過）
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
@@ -1032,47 +1242,48 @@ function init() {
 }
 
 /* ---------------------------------------------------------
-   密碼門鎖（簡單門鎖）
+   登入門鎖
    ---------------------------------------------------------
-   程式裡不放密碼本身，只放密碼的 SHA-256「指紋」。
-   比喻：像比對指紋，不用把鑰匙本體放在門口。
-   ⚠ 只能擋住一般點連結的人，懂技術的人仍可到 GitHub 看原始檔。
-   要換密碼：算出新密碼的 SHA-256 填到下面這行。
+   密碼是真正登入雲端用的，程式裡沒有存密碼。
+   沒登入就讀不到客戶資料；每台裝置輸入一次後會記住。
+   要換密碼：到 Firebase 的 Authentication 改使用者密碼。
    --------------------------------------------------------- */
-const PASS_HASH = 'd1c5d939a3ecb9bc8264a99209ee73d8ea171eaa2b3b24553762ae2571fd0430';
-
-async function sha256(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+let watching = false;
 
 function unlock() {
   document.body.classList.remove('locked');
+  if (watching) return;
+  watching = true;
+  Sync.watch(onOrders, (e) => { console.error(e); watching = false; }).catch(console.error);
+  retryPending(true);
 }
 
 function initLock() {
-  // 這台裝置之前輸入過正確密碼 → 直接進入
-  if (store.get('wyx_unlock', '') === PASS_HASH) { unlock(); return; }
-
   const form = $('#lock'), input = $('#lockPass'), err = $('#lockErr');
-  setTimeout(() => input.focus(), 100);
+  const showErr = (text) => { err.textContent = text; err.hidden = false; };
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!window.crypto || !crypto.subtle) {
-      // 只有 https 網址才能用瀏覽器的加密功能
-      err.textContent = '請用 https 開頭的正式網址開啟';
-      err.hidden = false;
-      return;
-    }
-    if (await sha256(input.value.trim()) === PASS_HASH) {
-      store.set('wyx_unlock', PASS_HASH);
+    try {
+      await Sync.login(input.value.trim());
+      store.set('wyx_signed', true);
       input.value = '';
-      unlock();
-    } else {
-      err.textContent = '密碼錯誤，請再試一次';
-      err.hidden = false;
+    } catch (ex) {
+      console.error(ex);
+      const wrong = String(ex.code || '').includes('invalid') || String(ex.code || '').includes('wrong-password');
+      showErr(wrong ? '密碼錯誤，請再試一次' : '連線失敗，請檢查網路');
       input.select();
     }
+  });
+
+  Sync.onUser((user) => {
+    if (user) unlock();
+    else setTimeout(() => input.focus(), 100);
+  }).catch((e) => {
+    // 沒網路下載不到 Firebase：登入過的裝置仍可先填單，訂單會排隊
+    console.error(e);
+    if (store.get('wyx_signed', false)) document.body.classList.remove('locked');
+    else showErr('連線失敗，請檢查網路');
   });
 }
 
