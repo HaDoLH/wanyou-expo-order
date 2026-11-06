@@ -323,6 +323,61 @@ function bindCustomer() {
   paintTax();
 }
 
+/* ---------- 水果特調雲端庫存 ----------
+   比喻：櫃台在雲端放一塊「剩幾公斤」的看板，大家看同一塊。
+   可訂量 ＝ 總庫存 − 已被訂單佔用；正在改的這張單自己佔的不算。 */
+let fruitStock = null;                    // { 品號: { total, reserved } }；null＝還沒讀到（沒網路）
+const isFruit = (p) => p && p.group === '水果特調';
+const HOLDING = ['pending', 'returned', 'paid'];
+
+function fruitAvailable(pid) {
+  if (!fruitStock) return null;           // 不知道就不擋，送單時雲端會再檢查
+  const it = fruitStock[pid] || { total: 0, reserved: 0 };
+  const rec = liveOf(state.orderNo);
+  const own = rec && HOLDING.includes(rec.status)
+    ? rec.order.rows.filter((r) => r.id === pid).reduce((t, r) => t + r.kg, 0) : 0;
+  return Math.max(0, it.total - it.reserved + own);
+}
+
+/** 這張單裡某支水果特調一共訂了幾 KG（同一支可能分好幾行） */
+const kgInOrder = (pid) => state.items.filter((it) => it.pid === pid)
+  .reduce((t, it) => t + splitItem(it).reduce((a, l) => a + l.kg, 0), 0);
+
+/** 超過可訂量的水果特調 [{ name, want, left }] */
+function fruitShortage() {
+  return [...new Set(state.items.map((it) => it.pid))]
+    .map(findProduct).filter(isFruit)
+    .map((p) => ({ name: p.name, want: kgInOrder(p.id), left: fruitAvailable(p.id) }))
+    .filter((x) => x.left !== null && x.want > x.left);
+}
+
+const stockText = (p) => {
+  const left = fruitAvailable(p.id);
+  return left === null ? '' : `可訂 ${left} KG`;
+};
+
+/** 庫存有變化時，只更新提示文字，不重畫輸入欄（不然打字會被打斷） */
+function paintStock() {
+  state.items.forEach((it) => {
+    const row = document.querySelector(`.item[data-uid="${it.uid}"]`);
+    if (row) row.querySelector('.item-note').innerHTML = itemNoteHTML(it);
+  });
+}
+
+function itemNoteHTML(it) {
+  const p = findProduct(it.pid);
+  if (!p) return '';
+  let html = esc(priceNote(p));
+  if (isFruit(p)) {
+    const left = fruitAvailable(p.id);
+    if (left !== null) {
+      const over = kgInOrder(p.id) > left;
+      html += `｜<b class="${over ? 'stock-over' : 'stock-ok'}">${over ? `庫存不足，只剩 ${left} KG` : `可訂 ${left} KG`}</b>`;
+    }
+  }
+  return html;
+}
+
 /* ---------- 品項選單：按國家折疊，點了才展開 ----------
    比喻：像抽屜櫃，一個國家一格抽屜，拉開才看到裡面的豆子。
    高單價、水果特調各自一格。代碼（ET037…）沒有時才顯示品號。 */
@@ -348,7 +403,7 @@ function openPicker(uid) {
       <summary><span>${esc(g)}</span><small>${list.length} 支</small></summary>
       ${list.map((p) => `
         <button type="button" class="pk-item${cur === p ? ' on' : ''}" data-pick="${p.id}">
-          <b>${esc(codeOf(p))}</b><span>${esc(p.name)}<small>${esc(priceNote(p))}</small></span>
+          <b>${esc(codeOf(p))}</b><span>${esc(p.name)}<small>${esc(priceNote(p))}${isFruit(p) && stockText(p) ? `｜${stockText(p)}` : ''}</small></span>
         </button>`).join('')}
     </details>`;
   }).join('');
@@ -399,7 +454,7 @@ function renderItems() {
         ${qtyControl(it)}
         <button type="button" class="icon-btn del-item" aria-label="刪除這行">×</button>
       </div>
-      <div class="item-note">${esc(priceNote(findProduct(it.pid)))}</div>
+      <div class="item-note">${itemNoteHTML(it)}</div>
       <div class="lines"></div>
     </div>`).join('');
   state.items.forEach((it) => renderLines(it));
@@ -435,6 +490,7 @@ function qtyControl(it) {
 function renderLines(it) {
   const row = document.querySelector(`.item[data-uid="${it.uid}"]`);
   if (!row) return;
+  if (isFruit(findProduct(it.pid))) paintStock();
   const box = row.querySelector('.lines');
   const lines = splitItem(it);
   if (!lines.length) { box.innerHTML = ''; return; }
@@ -690,6 +746,8 @@ function validate() {
   if (state.customer.staff === STAFF_OTHER && !(state.customer.staffOther || '').trim()) {
     errs.push('經手人員名字'); mark($('#cStaffOther'), '請輸入經手人員名字');
   }
+  // 水果特調超過可訂量
+  fruitShortage().forEach((x) => errs.push(`${x.name} 庫存不足（訂 ${x.want} KG，只剩 ${x.left} KG）`));
   // 統編選填；有填就要正確（避免發票開錯）
   if (state.customer.tax && !isValidTaxId(state.customer.tax)) {
     errs.push('統一編號不正確'); mark($('#cTax'), '統一編號不正確，請再確認');
@@ -759,7 +817,7 @@ function buildOrder() {
     const p = findProduct(it.pid);
     splitItem(it).forEach((l, i, arr) => rows.push({
       id: p.id, code: codeOf(p), name: p.name, spec: l.spec, price: Number(l.price), kg: l.kg,
-      per: l.per || '', qty: l.qty || 0,
+      per: l.per || '', qty: l.qty || 0, fruit: isFruit(p),
       subtotal: l.subtotal, first: i === 0, span: arr.length,
     }));
   });
@@ -1353,6 +1411,7 @@ function unlock() {
   if (watching) return;
   watching = true;
   Sync.watch(onOrders, (e) => { console.error(e); watching = false; }).catch(console.error);
+  Sync.watchStock((items) => { fruitStock = items; paintStock(); }, console.error).catch(console.error);
   retryPending(true);
 }
 
