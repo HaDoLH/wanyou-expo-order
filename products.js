@@ -83,14 +83,14 @@ const PRODUCTS = [
   { id: '21040860', code: 'CB019', group: '南美洲', name: '哥倫比亞 綠翡翠 薇拉產區 Supremo 水洗', p5: 380, pBag: 340, bagKg: 35, bagUnit: '袋' },
 
   // ---- 非洲 ----
-  { id: '21080445', group: '非洲', name: '衣索比亞 神燈系列 谷吉 香妃 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
+  { id: '21080445', code: 'ET041', group: '非洲', name: '衣索比亞 神燈系列 谷吉 香妃 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
   { id: '21080461', code: 'ET052', group: '非洲', name: '衣索比亞 谷吉 姬格薩處理廠 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
   { id: '21080462', code: 'ET053', group: '非洲', name: '衣索比亞 西達馬 班莎 聖塔維 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
   { id: '21080483', code: 'ET037', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 水洗 G1', p5: 500, pBag: 460, bagKg: 30, bagUnit: '袋' },
-  { id: '21080481', group: '非洲', name: '衣索比亞 西達馬 班莎 龐貝 日曬 G1', p5: 490, pBag: 480, bagKg: 30, bagUnit: '袋' },
+  { id: '21080481', code: 'ET020', group: '非洲', name: '衣索比亞 西達馬 班莎 龐貝 日曬 G1', p5: 490, pBag: 480, bagKg: 30, bagUnit: '袋' },
   { id: '21080485', code: 'ET054', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 日曬 G1', p5: 520, pBag: 480, bagKg: 30, bagUnit: '袋' },
   { id: '21080447', code: 'ET050', group: '非洲', name: '衣索比亞 卡法 艾玫夏梅塔處理廠 水洗 TOP G2', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
-  { id: '21040883', group: '非洲', name: '衣索比亞 西達摩 G4 日曬', p5: 350, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
+  { id: '21040883', code: 'ET016', group: '非洲', name: '衣索比亞 西達摩 G4 日曬', p5: 350, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
   { id: '21040869', code: 'KY022', group: '非洲', name: '肯亞 麒麟雅加 加古悠處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
   { id: '21040870', code: 'KY023', group: '非洲', name: '肯亞 涅里 迪麥處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
   { id: '21040871', code: 'KY024', group: '非洲', name: '肯亞 麒麟雅加 奇里處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
