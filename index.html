@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body class="locked">
 
@@ -219,14 +219,25 @@
   <!-- 產生圖片用的隱藏區（固定 800px 寬，讓每台裝置產出的圖都一樣） -->
   <div id="renderBox" aria-hidden="true"></div>
 
+  <!-- 品項選單：按國家折疊（點品項欄才出現） -->
+  <div id="picker" class="picker" hidden>
+    <div class="picker-panel" role="dialog" aria-label="選擇品項">
+      <div class="picker-head">
+        <b>選擇品項</b>
+        <button type="button" class="icon-btn" id="pickerClose" aria-label="關閉">×</button>
+      </div>
+      <div id="pickerList" class="picker-list"></div>
+    </div>
+  </div>
+
   <!-- 提示訊息 -->
   <div id="toast" class="toast" role="status"></div>
 
   <!-- 工具庫：html2canvas（網頁轉圖片）、jsPDF（產生 PDF） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="products.js?v=9"></script>
+  <script src="products.js?v=10"></script>
   <script src="sync.js?v=2"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

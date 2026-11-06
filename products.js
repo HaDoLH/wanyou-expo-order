@@ -54,7 +54,8 @@ const UPLOAD = {
 /* =========================================================
    商品清單
    ---------------------------------------------------------
-   id      編號
+   id      品號（8 碼，跟結帳系統對應用，畫面不顯示）
+   code    生豆代碼（ET037…，畫面與訂單顯示這個；沒填就顯示品號）
    group   下拉選單裡的分組
    name    品名
    p5      5KG 單價（每公斤）
@@ -69,57 +70,57 @@ const UPLOAD = {
    ========================================================= */
 const PRODUCTS = [
   // ---- 中美洲 ----
-  { id: '21015962', group: '中美洲', name: '哥斯大黎加 塔拉珠 聖母 水洗', p5: 390, pBag: 380, bagKg: 30, bagUnit: '袋' },
-  { id: '21070943', group: '中美洲', name: '巴拿馬 CCD計畫 Los Pozos 小農藝妓 日曬 Lot2', p5: 1580, pBag: 1550, bagKg: 25, bagUnit: '箱' },
-  { id: '21040851', group: '中美洲', name: '巴拿馬 微光秘密系列 愛德華 小農藝妓 水洗 SHB EP', p5: 860, pBag: 850, bagKg: 30, bagUnit: '箱' },
-  { id: '21080436', group: '中美洲', name: '尼加拉瓜 新塞哥維亞 守望者 Maragoype 象豆 水洗 SHG', p5: 500, pBag: 430, bagKg: 30, bagUnit: '袋' },
+  { id: '21015962', code: 'CR001', group: '中美洲', name: '哥斯大黎加 塔拉珠 聖母 水洗', p5: 390, pBag: 380, bagKg: 30, bagUnit: '袋' },
+  { id: '21070943', code: 'PM025', group: '中美洲', name: '巴拿馬 CCD計畫 Los Pozos 小農藝妓 日曬 Lot2', p5: 1580, pBag: 1550, bagKg: 25, bagUnit: '箱' },
+  { id: '21040851', code: 'PM022', group: '中美洲', name: '巴拿馬 微光秘密系列 愛德華 小農藝妓 水洗 SHB EP', p5: 860, pBag: 850, bagKg: 30, bagUnit: '箱' },
+  { id: '21080436', code: 'NR003', group: '中美洲', name: '尼加拉瓜 新塞哥維亞 守望者 Maragoype 象豆 水洗 SHG', p5: 500, pBag: 430, bagKg: 30, bagUnit: '袋' },
 
   // ---- 南美洲 ----
-  { id: '21090153', group: '南美洲', name: '玻利維亞 伊莎貝爾莊園 羅沙里歐 藝妓 水洗', p5: 1900, pBag: 1870, bagKg: 20, bagUnit: '箱' },
-  { id: '21070956', group: '南美洲', name: '哥倫比亞 納里尼奧 卡杜拉 Excelso 水洗', p5: 320, pBag: 310, bagKg: 30, bagUnit: '箱' },
-  { id: '21040880', group: '南美洲', name: '哥倫比亞 小飛象 水洗', p5: 390, pBag: 350, bagKg: 35, bagUnit: '袋' },
-  { id: '21040879', group: '南美洲', name: '哥倫比亞 黑武士 厭氧日曬', p5: 510, pBag: 470, bagKg: 35, bagUnit: '袋' },
-  { id: '21040860', group: '南美洲', name: '哥倫比亞 綠翡翠 薇拉產區 Supremo 水洗', p5: 380, pBag: 340, bagKg: 35, bagUnit: '袋' },
+  { id: '21090153', code: 'BV001', group: '南美洲', name: '玻利維亞 伊莎貝爾莊園 羅沙里歐 藝妓 水洗', p5: 1900, pBag: 1870, bagKg: 20, bagUnit: '箱' },
+  { id: '21070956', code: 'CB048', group: '南美洲', name: '哥倫比亞 納里尼奧 卡杜拉 Excelso 水洗', p5: 320, pBag: 310, bagKg: 30, bagUnit: '箱' },
+  { id: '21040880', code: 'CB005', group: '南美洲', name: '哥倫比亞 小飛象 水洗', p5: 390, pBag: 350, bagKg: 35, bagUnit: '袋' },
+  { id: '21040879', code: 'CB018', group: '南美洲', name: '哥倫比亞 黑武士 厭氧日曬', p5: 510, pBag: 470, bagKg: 35, bagUnit: '袋' },
+  { id: '21040860', code: 'CB019', group: '南美洲', name: '哥倫比亞 綠翡翠 薇拉產區 Supremo 水洗', p5: 380, pBag: 340, bagKg: 35, bagUnit: '袋' },
 
   // ---- 非洲 ----
   { id: '21080445', group: '非洲', name: '衣索比亞 神燈系列 谷吉 香妃 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
-  { id: '21080461', group: '非洲', name: '衣索比亞 谷吉 姬格薩處理廠 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
-  { id: '21080462', group: '非洲', name: '衣索比亞 西達馬 班莎 聖塔維 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
-  { id: '21080483', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 水洗 G1', p5: 500, pBag: 460, bagKg: 30, bagUnit: '袋' },
+  { id: '21080461', code: 'ET052', group: '非洲', name: '衣索比亞 谷吉 姬格薩處理廠 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
+  { id: '21080462', code: 'ET053', group: '非洲', name: '衣索比亞 西達馬 班莎 聖塔維 水洗 G1', p5: 470, pBag: 460, bagKg: 30, bagUnit: '袋' },
+  { id: '21080483', code: 'ET037', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 水洗 G1', p5: 500, pBag: 460, bagKg: 30, bagUnit: '袋' },
   { id: '21080481', group: '非洲', name: '衣索比亞 西達馬 班莎 龐貝 日曬 G1', p5: 490, pBag: 480, bagKg: 30, bagUnit: '袋' },
-  { id: '21080485', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 日曬 G1', p5: 520, pBag: 480, bagKg: 30, bagUnit: '袋' },
-  { id: '21080447', group: '非洲', name: '衣索比亞 卡法 艾玫夏梅塔處理廠 水洗 TOP G2', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
+  { id: '21080485', code: 'ET054', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 日曬 G1', p5: 520, pBag: 480, bagKg: 30, bagUnit: '袋' },
+  { id: '21080447', code: 'ET050', group: '非洲', name: '衣索比亞 卡法 艾玫夏梅塔處理廠 水洗 TOP G2', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
   { id: '21040883', group: '非洲', name: '衣索比亞 西達摩 G4 日曬', p5: 350, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
-  { id: '21040869', group: '非洲', name: '肯亞 麒麟雅加 加古悠處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21040870', group: '非洲', name: '肯亞 涅里 迪麥處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21040871', group: '非洲', name: '肯亞 麒麟雅加 奇里處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21040875', group: '非洲', name: '肯亞 涅里 加查薩處理廠 AA TOP 水洗', p5: 470, pBag: 460, bagKg: 30, bagUnit: '箱' },
-  { id: '21040863', group: '非洲', name: '肯亞 穆拉加 恩迪亞處理廠 PB TOP 水洗', p5: 460, pBag: 450, bagKg: 30, bagUnit: '箱' },
-  { id: '21040872', group: '非洲', name: '肯亞 麒麟雅加 奇異處理廠 PB TOP 水洗', p5: 460, pBag: 450, bagKg: 30, bagUnit: '箱' },
-  { id: '21040876', group: '非洲', name: '肯亞 AA FAQ 水洗', p5: 390, pBag: 350, bagKg: 30, bagUnit: '袋' },
-  { id: '21040877', group: '非洲', name: '肯亞 精選C 水洗', p5: 360, pBag: 320, bagKg: 30, bagUnit: '袋' },
-  { id: '21050149', group: '非洲', name: '烏干達 卡坦達 月亮山 AB 水洗', p5: 380, pBag: 340, bagKg: 30, bagUnit: '袋' },
+  { id: '21040869', code: 'KY022', group: '非洲', name: '肯亞 麒麟雅加 加古悠處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21040870', code: 'KY023', group: '非洲', name: '肯亞 涅里 迪麥處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21040871', code: 'KY024', group: '非洲', name: '肯亞 麒麟雅加 奇里處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21040875', code: 'KY025', group: '非洲', name: '肯亞 涅里 加查薩處理廠 AA TOP 水洗', p5: 470, pBag: 460, bagKg: 30, bagUnit: '箱' },
+  { id: '21040863', code: 'KY026', group: '非洲', name: '肯亞 穆拉加 恩迪亞處理廠 PB TOP 水洗', p5: 460, pBag: 450, bagKg: 30, bagUnit: '箱' },
+  { id: '21040872', code: 'KY027', group: '非洲', name: '肯亞 麒麟雅加 奇異處理廠 PB TOP 水洗', p5: 460, pBag: 450, bagKg: 30, bagUnit: '箱' },
+  { id: '21040876', code: 'KY006', group: '非洲', name: '肯亞 AA FAQ 水洗', p5: 390, pBag: 350, bagKg: 30, bagUnit: '袋' },
+  { id: '21040877', code: 'KY028', group: '非洲', name: '肯亞 精選C 水洗', p5: 360, pBag: 320, bagKg: 30, bagUnit: '袋' },
+  { id: '21050149', code: 'UG001', group: '非洲', name: '烏干達 卡坦達 月亮山 AB 水洗', p5: 380, pBag: 340, bagKg: 30, bagUnit: '袋' },
 
   // ---- 海島・其他 ----
-  { id: '21080472', group: '海島・其他', name: '印尼 曼特寧 G1 TP', p5: 420, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
-  { id: '21050141', group: '海島・其他', name: '印尼 瓦哈娜莊園 拉蘇娜 日曬', p5: 530, pBag: 520, bagKg: 30, bagUnit: '箱' },
-  { id: '21090140', group: '海島・其他', name: '夏威夷 海灣 可那 Extra Fancy 水洗', p5: 3250, pBag: null, bagKg: 30, bagUnit: '箱' },
-  { id: '21080473', group: '海島・其他', name: '印尼 蘇門達臘 林東 托巴湖 藍眼 曼特寧 G1 TP', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
+  { id: '21080472', code: 'IS001', group: '海島・其他', name: '印尼 曼特寧 G1 TP', p5: 420, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
+  { id: '21050141', code: 'IS003', group: '海島・其他', name: '印尼 瓦哈娜莊園 拉蘇娜 日曬', p5: 530, pBag: 520, bagKg: 30, bagUnit: '箱' },
+  { id: '21090140', code: 'HW001', group: '海島・其他', name: '夏威夷 海灣 可那 Extra Fancy 水洗', p5: 3250, pBag: null, bagKg: 30, bagUnit: '箱' },
+  { id: '21080473', code: 'IS002', group: '海島・其他', name: '印尼 蘇門達臘 林東 托巴湖 藍眼 曼特寧 G1 TP', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
 
   // ---- 高單價（小包裝） ----
-  { id: '21080475', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 晨曦 日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 900, unit: '包' }, { label: '500公克', kg: 0.5, price: 525, unit: '包' }] },
-  { id: '21080476', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 瑰色 黑蜜 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1450, unit: '包' }, { label: '500公克', kg: 0.5, price: 800, unit: '包' }] },
-  { id: '21080477', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 雲境 黃蜜 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1150, unit: '包' }, { label: '500公克', kg: 0.5, price: 650, unit: '包' }] },
-  { id: '21080478', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 斑斕 日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1900, unit: '包' }, { label: '500公克', kg: 0.5, price: 1000, unit: '包' }] },
-  { id: '21080479', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 日花 厭氧日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1250, unit: '包' }, { label: '500公克', kg: 0.5, price: 700, unit: '包' }] },
-  { id: '21080480', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 澄霞 厭氧日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1150, unit: '包' }, { label: '500公克', kg: 0.5, price: 650, unit: '包' }] },
-  { id: '21090147', group: '高單價（小包裝）', name: '玻利維亞 伊莎貝爾莊園 競標批次 藝妓 水洗 #Tunki ISA03', packs: [{ label: '250公克', kg: 0.25, price: 3100, unit: '盒' }] },
-  { id: '21090157', group: '高單價（小包裝）', name: '英國 聖海倫娜 樹籬竹木莊園 水洗', packs: [{ label: '500公克', kg: 0.5, price: 2660, unit: '盒' }] },
+  { id: '21080475', code: 'ET057', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 晨曦 日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 900, unit: '包' }, { label: '500公克', kg: 0.5, price: 525, unit: '包' }] },
+  { id: '21080476', code: 'ET058', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 瑰色 黑蜜 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1450, unit: '包' }, { label: '500公克', kg: 0.5, price: 800, unit: '包' }] },
+  { id: '21080477', code: 'ET059', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 雲境 黃蜜 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1150, unit: '包' }, { label: '500公克', kg: 0.5, price: 650, unit: '包' }] },
+  { id: '21080478', code: 'ET060', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 斑斕 日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1900, unit: '包' }, { label: '500公克', kg: 0.5, price: 1000, unit: '包' }] },
+  { id: '21080479', code: 'ET061', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 日花 厭氧日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1250, unit: '包' }, { label: '500公克', kg: 0.5, price: 700, unit: '包' }] },
+  { id: '21080480', code: 'ET062', group: '高單價（小包裝）', name: '衣索比亞 迷霧山谷系列 澄霞 厭氧日曬 Premium 微批次', packs: [{ label: '1KG真空', kg: 1, price: 1150, unit: '包' }, { label: '500公克', kg: 0.5, price: 650, unit: '包' }] },
+  { id: '21090147', code: 'BV004', group: '高單價（小包裝）', name: '玻利維亞 伊莎貝爾莊園 競標批次 藝妓 水洗 #Tunki ISA03', packs: [{ label: '250公克', kg: 0.25, price: 3100, unit: '盒' }] },
+  { id: '21090157', code: 'UK001', group: '高單價（小包裝）', name: '英國 聖海倫娜 樹籬竹木莊園 水洗', packs: [{ label: '500公克', kg: 0.5, price: 2660, unit: '盒' }] },
 
   // ---- 水果特調 ----
-  { id: '21015970', group: '水果特調', name: '哥倫比亞 水果特調系列 蜜瓜莫西托 Melon Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21015971', group: '水果特調', name: '哥倫比亞 水果特調系列 百香果莫西托 Passionfruit Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21015972', group: '水果特調', name: '哥倫比亞 水果特調系列 草莓莫西托 Strawberry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21015973', group: '水果特調', name: '哥倫比亞 水果特調系列 櫻桃莫西托 Cherry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
-  { id: '21015974', group: '水果特調', name: '哥倫比亞 水果特調系列 藍莓莫西托 Blueberry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21015970', code: 'CB042', group: '水果特調', name: '哥倫比亞 水果特調系列 蜜瓜莫西托 Melon Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21015971', code: 'CB043', group: '水果特調', name: '哥倫比亞 水果特調系列 百香果莫西托 Passionfruit Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21015972', code: 'CB044', group: '水果特調', name: '哥倫比亞 水果特調系列 草莓莫西托 Strawberry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21015973', code: 'CB045', group: '水果特調', name: '哥倫比亞 水果特調系列 櫻桃莫西托 Cherry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
+  { id: '21015974', code: 'CB046', group: '水果特調', name: '哥倫比亞 水果特調系列 藍莓莫西托 Blueberry Mojito', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
 ];

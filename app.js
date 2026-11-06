@@ -323,18 +323,58 @@ function bindCustomer() {
   paintTax();
 }
 
-// 商品下拉選單的選項（依產區分組）
-function productOptions(selected) {
-  const groups = [...new Set(PRODUCTS.map((p) => p.group))];
-  let html = '<option value="">— 請選擇品項 —</option>';
-  groups.forEach((g) => {
-    html += `<optgroup label="${esc(g)}">`;
-    PRODUCTS.filter((p) => p.group === g).forEach((p) => {
-      html += `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${p.id}　${esc(p.name)}</option>`;
-    });
-    html += '</optgroup>';
+/* ---------- 品項選單：按國家折疊，點了才展開 ----------
+   比喻：像抽屜櫃，一個國家一格抽屜，拉開才看到裡面的豆子。
+   高單價、水果特調各自一格。代碼（ET037…）沒有時才顯示品號。 */
+const codeOf = (p) => p.code || p.id;
+const pickGroupOf = (p) => (['高單價（小包裝）', '水果特調'].includes(p.group) ? p.group : p.name.split(' ')[0]);
+
+function pickLabel(pid) {
+  const p = findProduct(pid);
+  return p ? `${codeOf(p)}　${p.name}` : '— 請選擇品項 —';
+}
+
+let pickingUid = null; // 正在幫哪一行選品項
+
+function openPicker(uid) {
+  pickingUid = uid;
+  const cur = findProduct(state.items.find((x) => x.uid === uid).pid);
+  const groups = [...new Set(PRODUCTS.map(pickGroupOf))];
+  $('#pickerList').innerHTML = groups.map((g) => {
+    const list = PRODUCTS.filter((p) => pickGroupOf(p) === g);
+    const open = cur && pickGroupOf(cur) === g; // 已選的品項所在國家先打開
+    return `
+    <details class="pk-group"${open ? ' open' : ''}>
+      <summary><span>${esc(g)}</span><small>${list.length} 支</small></summary>
+      ${list.map((p) => `
+        <button type="button" class="pk-item${cur === p ? ' on' : ''}" data-pick="${p.id}">
+          <b>${esc(codeOf(p))}</b><span>${esc(p.name)}<small>${esc(priceNote(p))}</small></span>
+        </button>`).join('')}
+    </details>`;
+  }).join('');
+  $('#picker').hidden = false;
+  document.body.classList.add('picking');
+}
+
+function closePicker() {
+  $('#picker').hidden = true;
+  document.body.classList.remove('picking');
+  pickingUid = null;
+}
+
+function bindPicker() {
+  $('#pickerClose').addEventListener('click', closePicker);
+  $('#picker').addEventListener('click', (e) => {
+    if (e.target.id === 'picker') return closePicker(); // 點外面關閉
+    const btn = e.target.closest('[data-pick]');
+    if (!btn) return;
+    const it = state.items.find((x) => x.uid === pickingUid);
+    it.pid = btn.dataset.pick;
+    it.bagPrice = null; it.unitPrice = null; // 換豆子 → 單價回到預設
+    it.pack = 0; it.qty = 1;
+    closePicker();
+    renderItems(); save(); // 一般豆子／小包裝的數量欄不一樣，整列重畫
   });
-  return html;
 }
 
 // 一個商品的「價格說明」小字：5KG $460／30KG袋 $450
@@ -355,7 +395,7 @@ function renderItems() {
     <div class="item" data-uid="${it.uid}">
       <div class="item-head">
         <span class="item-no">${i + 1}</span>
-        <select class="item-select" aria-label="品項">${productOptions(it.pid)}</select>
+        <button type="button" class="item-pick${it.pid ? '' : ' empty'}" aria-label="選擇品項">${esc(pickLabel(it.pid))}</button>
         ${qtyControl(it)}
         <button type="button" class="icon-btn del-item" aria-label="刪除這行">×</button>
       </div>
@@ -423,15 +463,14 @@ function bindItems() {
   const list = $('#itemList');
   const itemOf = (el) => state.items.find((x) => x.uid === el.closest('.item').dataset.uid);
 
-  // 換品項
+  // 點品項 → 打開國家折疊選單
+  list.addEventListener('click', (e) => {
+    const pick = e.target.closest('.item-pick');
+    if (pick) openPicker(pick.closest('.item').dataset.uid);
+  });
+
   list.addEventListener('change', (e) => {
     const it = itemOf(e.target);
-    if (e.target.classList.contains('item-select')) {
-      it.pid = e.target.value;
-      it.bagPrice = null; it.unitPrice = null; // 換豆子 → 單價回到預設
-      it.pack = 0; it.qty = 1;
-      renderItems(); save(); // 一般豆子／小包裝的數量欄不一樣，整列重畫
-    }
     // 換包裝（500公克 ↔ 1KG）→ 單價回到該包裝的預設
     if (e.target.classList.contains('pack-select')) {
       it.pack = Number(e.target.value);
@@ -719,7 +758,7 @@ function buildOrder() {
   state.items.filter((it) => it.pid).forEach((it) => {
     const p = findProduct(it.pid);
     splitItem(it).forEach((l, i, arr) => rows.push({
-      id: p.id, name: p.name, spec: l.spec, price: Number(l.price), kg: l.kg,
+      id: p.id, code: codeOf(p), name: p.name, spec: l.spec, price: Number(l.price), kg: l.kg,
       per: l.per || '', qty: l.qty || 0,
       subtotal: l.subtotal, first: i === 0, span: arr.length,
     }));
@@ -779,7 +818,7 @@ function sheetHTML(o) {
   ];
   const itemRows = o.rows.map((r) => `
     <tr>
-      ${r.first ? `<td class="t-id" rowspan="${r.span}">${r.id}</td><td class="t-name" rowspan="${r.span}"><span class="t-id-inline">${r.id}</span>${esc(r.name)}</td>` : ''}
+      ${r.first ? `<td class="t-id" rowspan="${r.span}">${esc(r.code || r.id)}</td><td class="t-name" rowspan="${r.span}"><span class="t-id-inline">${esc(r.code || r.id)}</span>${esc(r.name)}</td>` : ''}
       <td class="t-spec">${r.spec}</td>
       <td class="t-num">${money(r.price)}${r.per ? `/${r.per}` : ''}</td>
       <td class="t-num">${r.kg}</td>
@@ -1257,6 +1296,7 @@ function init() {
   bindItems();
   bindExtras();
   bindShipGift();
+  bindPicker();
   initForm();
 
   $('#nextBtn').addEventListener('click', showDetail);
