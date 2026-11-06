@@ -90,7 +90,8 @@ const findProduct = (id) => PRODUCTS.find((p) => p.id === id);
 
 function newItem() {
   // pid=選哪支豆子、kg=公斤數、bagPrice/unitPrice=手動改過的單價（null=用預設）
-  return { uid: uid(), pid: '', kg: 5, bagPrice: null, unitPrice: null };
+  // 高單價小包裝不用公斤數：pack=選第幾種包裝、qty=幾包
+  return { uid: uid(), pid: '', kg: 5, pack: 0, qty: 1, bagPrice: null, unitPrice: null };
 }
 function newExtra() {
   return { uid: uid(), name: '', kg: '', price: '' };
@@ -128,6 +129,7 @@ const save = () => store.set(KEY.draft, state);
 function splitItem(item) {
   const p = findProduct(item.pid);
   if (!p) return [];
+  if (p.packs) return splitPack(item, p);
   const kg = item.kg;
   const lines = [];
 
@@ -161,6 +163,23 @@ function splitItem(item) {
   }
   lines.forEach((l) => { l.subtotal = l.missing ? 0 : Number(l.price) * l.kg; });
   return lines;
+}
+
+/** 高單價小包裝：一種包裝一行，價格是「每包／每盒」 */
+function splitPack(item, p) {
+  const pk = p.packs[item.pack] || p.packs[0];
+  const qty = item.qty || 1;
+  const price = item.unitPrice ?? pk.price;
+  const missing = price === null || price === '' || Number(price) <= 0;
+  return [{
+    kind: 'unit',
+    spec: `${pk.label} ×${qty}`,
+    kg: Math.round(pk.kg * qty * 100) / 100, // 算總重、免運用
+    qty, per: pk.unit,                       // 單價單位：包／盒
+    price, missing,
+    edited: item.unitPrice !== null && item.unitPrice !== pk.price,
+    subtotal: missing ? 0 : Number(price) * qty,
+  }];
 }
 
 /** 算整張訂單的總重、金額、運費、贈品 */
@@ -321,6 +340,7 @@ function productOptions(selected) {
 // 一個商品的「價格說明」小字：5KG $460／30KG袋 $450
 function priceNote(p) {
   if (!p) return '';
+  if (p.packs) return p.packs.map((k) => `${k.label} $${money(k.price)}/${k.unit}`).join('｜');
   let s = `5KG 單價 $${money(p.p5)}`;
   if (typeof p.pBag === 'number') s += `｜${p.bagKg}KG/${p.bagUnit} 單價 $${money(p.pBag)}`;
   else if (p.pBag === 'quote') s += `｜${p.bagKg}KG/${p.bagUnit} 業務報價`;
@@ -336,12 +356,7 @@ function renderItems() {
       <div class="item-head">
         <span class="item-no">${i + 1}</span>
         <select class="item-select" aria-label="品項">${productOptions(it.pid)}</select>
-        <div class="stepper" aria-label="公斤數">
-          <button type="button" class="step-btn" data-d="-5" aria-label="減 5KG">−</button>
-          <input type="number" class="kg-input" inputmode="numeric" min="5" step="5" value="${it.kg}">
-          <span class="kg-unit">KG</span>
-          <button type="button" class="step-btn" data-d="5" aria-label="加 5KG">＋</button>
-        </div>
+        ${qtyControl(it)}
         <button type="button" class="icon-btn del-item" aria-label="刪除這行">×</button>
       </div>
       <div class="item-note">${esc(priceNote(findProduct(it.pid)))}</div>
@@ -349,6 +364,31 @@ function renderItems() {
     </div>`).join('');
   state.items.forEach((it) => renderLines(it));
   updateTotals();
+}
+
+/** 數量控制：一般豆子用公斤（每次 5KG），小包裝用「包裝＋幾包」 */
+function qtyControl(it) {
+  const p = findProduct(it.pid);
+  if (p && p.packs) {
+    const pk = p.packs[it.pack] || p.packs[0];
+    const options = p.packs.map((k, i) =>
+      `<option value="${i}"${k === pk ? ' selected' : ''}>${k.label}</option>`).join('');
+    return `
+        <select class="pack-select" aria-label="包裝"${p.packs.length < 2 ? ' disabled' : ''}>${options}</select>
+        <div class="stepper" aria-label="數量">
+          <button type="button" class="step-btn" data-d="-1" aria-label="減 1">−</button>
+          <input type="number" class="qty-input" inputmode="numeric" min="1" step="1" value="${it.qty || 1}">
+          <span class="kg-unit">${pk.unit}</span>
+          <button type="button" class="step-btn" data-d="1" aria-label="加 1">＋</button>
+        </div>`;
+  }
+  return `
+        <div class="stepper" aria-label="公斤數">
+          <button type="button" class="step-btn" data-d="-5" aria-label="減 5KG">−</button>
+          <input type="number" class="kg-input" inputmode="numeric" min="5" step="5" value="${it.kg}">
+          <span class="kg-unit">KG</span>
+          <button type="button" class="step-btn" data-d="5" aria-label="加 5KG">＋</button>
+        </div>`;
 }
 
 /** 只重畫某一行商品下面的拆袋明細 */
@@ -364,8 +404,8 @@ function renderLines(it) {
       <label class="line-price">
         <span>$</span>
         <input type="number" inputmode="numeric" class="price-input${l.edited ? ' edited' : ''}"
-          value="${l.price ?? ''}" placeholder="請填單價" aria-label="每公斤單價">
-        <span>/kg</span>
+          value="${l.price ?? ''}" placeholder="請填單價" aria-label="單價">
+        <span>/${l.per || 'kg'}</span>
       </label>
       <span class="line-sub">$${money(l.subtotal)}</span>
     </div>`).join('');
@@ -389,8 +429,18 @@ function bindItems() {
     if (e.target.classList.contains('item-select')) {
       it.pid = e.target.value;
       it.bagPrice = null; it.unitPrice = null; // 換豆子 → 單價回到預設
-      const row = e.target.closest('.item');
-      row.querySelector('.item-note').textContent = priceNote(findProduct(it.pid));
+      it.pack = 0; it.qty = 1;
+      renderItems(); save(); // 一般豆子／小包裝的數量欄不一樣，整列重畫
+    }
+    // 換包裝（500公克 ↔ 1KG）→ 單價回到該包裝的預設
+    if (e.target.classList.contains('pack-select')) {
+      it.pack = Number(e.target.value);
+      it.unitPrice = null;
+      renderItems(); save();
+    }
+    if (e.target.classList.contains('qty-input')) {
+      it.qty = Math.max(1, Math.min(999, Math.round(Number(e.target.value) || 1)));
+      e.target.value = it.qty;
       renderLines(it); updateTotals(); save();
     }
     // 公斤數打完字、離開欄位時修正成 5 的倍數
@@ -424,8 +474,14 @@ function bindItems() {
     const step = e.target.closest('.step-btn');
     if (step) {
       const it = itemOf(step);
-      it.kg = normalizeKg(it.kg + Number(step.dataset.d));
-      step.closest('.stepper').querySelector('.kg-input').value = it.kg;
+      const qtyInput = step.closest('.stepper').querySelector('.qty-input');
+      if (qtyInput) {
+        it.qty = Math.max(1, (it.qty || 1) + Number(step.dataset.d));
+        qtyInput.value = it.qty;
+      } else {
+        it.kg = normalizeKg(it.kg + Number(step.dataset.d));
+        step.closest('.stepper').querySelector('.kg-input').value = it.kg;
+      }
       renderLines(it); updateTotals(); save();
       return;
     }
@@ -664,6 +720,7 @@ function buildOrder() {
     const p = findProduct(it.pid);
     splitItem(it).forEach((l, i, arr) => rows.push({
       id: p.id, name: p.name, spec: l.spec, price: Number(l.price), kg: l.kg,
+      per: l.per || '', qty: l.qty || 0,
       subtotal: l.subtotal, first: i === 0, span: arr.length,
     }));
   });
@@ -724,7 +781,7 @@ function sheetHTML(o) {
     <tr>
       ${r.first ? `<td class="t-id" rowspan="${r.span}">${r.id}</td><td class="t-name" rowspan="${r.span}"><span class="t-id-inline">${r.id}</span>${esc(r.name)}</td>` : ''}
       <td class="t-spec">${r.spec}</td>
-      <td class="t-num">${money(r.price)}</td>
+      <td class="t-num">${money(r.price)}${r.per ? `/${r.per}` : ''}</td>
       <td class="t-num">${r.kg}</td>
       <td class="t-num">${money(r.subtotal)}</td>
     </tr>`).join('');
@@ -755,7 +812,7 @@ function sheetHTML(o) {
     <table class="sh-items">
       <thead><tr>
         <th>編號</th><th>品名</th><th>規格</th>
-        <th class="t-num">單價/kg</th><th class="t-num">數量(KG)</th><th class="t-num">小計</th>
+        <th class="t-num">單價</th><th class="t-num">數量(KG)</th><th class="t-num">小計</th>
       </tr></thead>
       <tbody>${itemRows}${extraRows}</tbody>
     </table>
@@ -823,7 +880,7 @@ const orderHash = (o) => JSON.stringify({ ...o, no: '', createdAt: '' });
 function paintFinish() {
   const rec = liveOf(state.orderNo);
   const status = rec ? rec.status : '';
-  const locked = ['paid', 'void', 'cancelled'].includes(status);
+  const locked = ['paid', 'void', 'cancelled', 'deleted'].includes(status);
   const changed = !!state.sent && currentOrder && orderHash(currentOrder) !== state.sent.hash;
   const b = $('#finishBtn');
 
@@ -833,6 +890,7 @@ function paintFinish() {
     paid: '這張單不能再修改。要改單請櫃台作廢後重開',
     void: `${rec && rec.voidReason ? `${rec.voidReason}。` : ''}可以複製成新單`,
     cancelled: '可以複製成新單',
+    deleted: '櫃台已刪除這張單，可以複製成新單',
   };
   const banner = $('#statusBanner');
   banner.hidden = !status;
@@ -846,7 +904,7 @@ function paintFinish() {
       : '修改後重新送單';
   $('#backBtn').hidden = locked;
   $('#cancelBtn').hidden = !['pending', 'returned'].includes(status);
-  $('#copyBtn').hidden = !['void', 'cancelled'].includes(status);
+  $('#copyBtn').hidden = !['void', 'cancelled', 'deleted'].includes(status);
 }
 
 /* ---------------------------------------------------------
@@ -1059,7 +1117,7 @@ function openOrder(no) {
 function renderList() {
   const staff = $('#listStaff').value;
   const q = $('#listSearch').value.trim();
-  const all = Object.values(live).sort((a, b) => b.createdAt - a.createdAt);
+  const all = Object.values(live).filter((o) => o.status !== 'deleted').sort((a, b) => b.createdAt - a.createdAt);
 
   // 經手人員篩選：只列出有訂單的人，選過的保留
   const names = [...new Set(all.map((o) => o.staff).filter(Boolean))];
