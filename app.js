@@ -334,8 +334,10 @@ function fruitAvailable(pid) {
   if (!fruitStock) return null;           // 不知道就不擋，送單時雲端會再檢查
   const it = fruitStock[pid] || { total: 0, reserved: 0 };
   const rec = liveOf(state.orderNo);
+  // 這張單自己佔的要加回來（不然修改時會被自己擋住）。
+  // 只算有 fruit 標記的列，跟雲端的算法一致（超賣檢查上線前的舊單沒有標記，雲端也沒算它）
   const own = rec && HOLDING.includes(rec.status)
-    ? rec.order.rows.filter((r) => r.id === pid).reduce((t, r) => t + r.kg, 0) : 0;
+    ? rec.order.rows.filter((r) => r.id === pid && r.fruit).reduce((t, r) => t + r.kg, 0) : 0;
   return Math.max(0, it.total - it.reserved + own);
 }
 
