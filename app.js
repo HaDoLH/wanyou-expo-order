@@ -877,7 +877,8 @@ function stampHTML(o) {
     return `<div class="sh-tag">${STATUS_LABEL[rec.status]}</div>`;
   }
   const at = rec.status === 'paid' ? timeText(rec.paid.at) : timeText(rec.updatedAt);
-  return `<div class="sh-stamp ${rec.status}">${STATUS_LABEL[rec.status]}<small>${at}</small></div>`;
+  const cls = rec.status === 'paid' ? 'paid' : 'void'; // 取消／刪除也蓋紅色「已作廢」章
+  return `<div class="sh-stamp ${cls}">${SALES_LABEL[rec.status]}<small>${at}</small></div>`;
 }
 
 /** 時間顯示：11/14 14:30 */
@@ -1005,14 +1006,14 @@ function paintFinish() {
     pending: '已送到櫃台，等待客人結帳',
     returned: `櫃台退回的原因：${(rec && rec.returnReason) || '請確認訂單'}`,
     paid: '這張單不能再修改。要改單請櫃台作廢後重開',
-    void: `${rec && rec.voidReason ? `${rec.voidReason}。` : ''}可以複製成新單`,
-    cancelled: '可以複製成新單',
-    deleted: '櫃台已刪除這張單，可以複製成新單',
+    void: `${rec && rec.voidReason ? `${rec.voidReason}。` : ''}${VOID_NOTE}`,
+    cancelled: VOID_NOTE,
+    deleted: VOID_NOTE,
   };
   const banner = $('#statusBanner');
   banner.hidden = !status;
-  banner.className = `status-banner ${status}`;
-  banner.textContent = status ? `${STATUS_LABEL[status]}｜${notes[status]}` : '';
+  banner.className = `status-banner ${['cancelled', 'deleted'].includes(status) ? 'void' : status}`;
+  banner.textContent = status ? `${SALES_LABEL[status]}，${notes[status]}` : '';
 
   b.hidden = locked;
   b.disabled = status === 'pending' && !changed;
@@ -1085,9 +1086,23 @@ async function busy(btn, fn) {
   if (!$('#viewDetail').hidden) paintFinish(); // 按鈕文字與狀態依最新訂單重畫
 }
 
+// iPhone／iPad：網頁不能直接寫進相簿，「下載」只會進「檔案」App；
+// 改成叫出分享選單，點「儲存影像」就會進相簿（iPadOS 會假裝成 Mac，所以另外看觸控）
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 async function downloadPng() {
   const canvas = await renderCanvas(currentOrder);
-  downloadBlob(await canvasToBlob(canvas), fileBase(currentOrder) + '.png');
+  const blob = await canvasToBlob(canvas);
+  const name = fileBase(currentOrder) + '.png';
+  const file = new File([blob], name, { type: 'image/png' });
+  if (IS_IOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+    toast('請點選單裡的「儲存影像」，就會存進相簿', 6000);
+    try { await navigator.share({ files: [file] }); }
+    catch (e) { if (e.name !== 'AbortError') throw e; }
+    return;
+  }
+  downloadBlob(blob, name); // Android／電腦：存到「下載」，Android 相簿的 Download 資料夾看得到
 }
 
 async function downloadPdf() {
@@ -1194,12 +1209,17 @@ async function sendOrder() {
   paintFinish();
 }
 
-/** 取消訂單（還沒付款才可以） */
+/** 作廢訂單（還沒付款才可以；任何一台業務裝置都能作廢）。
+   從櫃台清單直接移除、雲端留紀錄，水果特調佔用的庫存同時歸還 */
 async function cancelOrder() {
-  if (!confirm('確定要取消這張訂單嗎？')) return;
-  try { await Sync.cancel(state.orderNo, live[state.orderNo].version); toast('已取消訂單'); }
+  if (!confirm('確定要作廢這張訂單嗎？\n作廢後櫃台清單會移除，客人要訂購請重寫訂單。')) return;
+  try { await Sync.remove(state.orderNo); toast('已作廢，訂購請重寫訂單', 3500); }
   catch (e) { toast(syncErrorText(e), 4500); }
 }
+
+// 業務端看到的狀態名稱：取消／刪除一律叫「已作廢」，大家說法一致
+const SALES_LABEL = { ...STATUS_LABEL, cancelled: '已作廢', deleted: '已作廢' };
+const VOID_NOTE = '訂購請重寫訂單';
 
 /** 把已作廢／取消的單複製成新單（內容帶回填單頁，客人不用重填） */
 function copyOrder() {
@@ -1246,7 +1266,7 @@ function renderList() {
     && (!q || [o.no, o.name, o.phone].some((v) => String(v).includes(q))));
   $('#orderList').innerHTML = shown.map((o) => `
     <button type="button" class="order-row" data-no="${esc(o.no)}">
-      <span class="order-badge ${o.status}">${STATUS_LABEL[o.status]}</span>
+      <span class="order-badge ${o.status === 'cancelled' ? 'void' : o.status}">${SALES_LABEL[o.status]}</span>
       <span class="order-main"><b>${esc(o.name)}</b><small>${esc(o.no)}｜${esc(o.staff) || '—'}</small></span>
       <span class="order-total">$${money(o.total)}</span>
     </button>`).join('') || '<p class="hint">目前沒有訂單</p>';
@@ -1381,6 +1401,7 @@ function init() {
   $('#backBtn').addEventListener('click', showForm);
   $('#resetBtn').addEventListener('click', () => newOrder(true));
   $('#newBtn').addEventListener('click', () => newOrder(true));
+  if (IS_IOS) $('#dlPng').textContent = '存到相簿';
   $('#dlPng').addEventListener('click', (e) => busy(e.currentTarget, downloadPng));
   $('#dlPdf').addEventListener('click', (e) => busy(e.currentTarget, downloadPdf));
   $('#shareBtn').addEventListener('click', (e) => busy(e.currentTarget, shareImage));
