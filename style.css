@@ -189,10 +189,11 @@ input[type=number] { -moz-appearance: textfield; }
   font-size: 20px; color: var(--ink);
 }
 .step-btn:active { background: var(--line); }
-.kg-input {
+.kg-input, .qty-input {
   width: 58px !important; min-height: 42px !important; border: 0 !important; border-radius: 0 !important;
   text-align: right; padding: 0 2px !important; box-shadow: none !important;
 }
+.qty-input { width: 46px !important; } /* 包數通常 1～2 位數，窄一點 */
 .kg-unit { padding: 0 8px 0 2px; font-size: 14px; color: var(--ink-2); }
 
 .icon-btn {
@@ -422,10 +423,11 @@ button:disabled { opacity: .55; cursor: wait; }
   .span-2 { grid-column: auto; }
   .brand-sub { display: none; }
 
+  /* 手機：第一行「編號＋品項＋×」，第二行「包裝／公斤數」 */
   .item-head { flex-wrap: wrap; }
-  .item-pick { flex-basis: calc(100% - 70px); }
+  .item-pick { flex: 1 1 calc(100% - 80px); } /* 剛好佔滿第一行（只留 × 的位置），包裝／公斤數一定換到第二行 */
+  .stepper, .pack-select { order: 2; }
   .stepper { margin-left: 34px; }
-  .del-item { margin-left: auto; }
   .lines, .item-note { margin-left: 0; }
   .line { grid-template-columns: 1fr auto; }
   .line-spec { grid-column: span 2; }
@@ -461,7 +463,9 @@ button:disabled { opacity: .55; cursor: wait; }
 /* 高單價小包裝：包裝選單（500公克／1KG真空） */
 .pack-select { flex: none; width: auto !important; min-width: 108px; }
 @media (max-width: 640px) {
-  .pack-select { margin-left: 34px; }
+  /* 包裝選單從最左邊開始、填滿剩下寬度，包數固定在右邊，窄手機也排得下同一行 */
+  .pack-select { margin-left: 0; min-width: 0; flex: 1 1 0; }
+  .pack-select + .stepper { margin-left: 0; }
 }
 
 /* ---------- 品項選單（國家折疊）---------- */
