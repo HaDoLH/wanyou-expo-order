@@ -384,11 +384,29 @@ function itemNoteHTML(it) {
    比喻：像抽屜櫃，一個國家一格抽屜，拉開才看到裡面的豆子。
    高單價、水果特調各自一格。代碼（ET037…）沒有時才顯示品號。 */
 const codeOf = (p) => p.code || p.id;
-const pickGroupOf = (p) => (['高單價（小包裝）', '水果特調'].includes(p.group) ? p.group : p.name.split(' ')[0]);
+const isMist = (p) => p.name.includes('迷霧山谷系列');
+
+/** 選單的抽屜：一般豆子用國家；水果特調、迷霧山谷、其他高單價各自一格 */
+function pickGroupOf(p) {
+  if (p.group === '水果特調') return '哥倫比亞 水果特調系列';
+  if (p.group === '高單價（小包裝）') return isMist(p) ? '衣索比亞 迷霧山谷系列' : '高單價生豆';
+  return p.name.split(' ')[0];
+}
+
+/** 選單與品項欄用的短品名，業務比較好辨認（訂單上仍印完整品名）
+    水果特調只留「蜜瓜莫西托」；迷霧山谷去掉前面的「衣索比亞 迷霧山谷系列」 */
+function shortName(p) {
+  if (p.group === '水果特調') {
+    const m = p.name.match(/(\S+莫西托)/);
+    return m ? m[1] : p.name;
+  }
+  if (isMist(p)) return p.name.split('迷霧山谷系列')[1].trim();
+  return p.name;
+}
 
 function pickLabel(pid) {
   const p = findProduct(pid);
-  return p ? `${codeOf(p)}　${p.name}` : '— 請選擇品項 —';
+  return p ? `${codeOf(p)}　${shortName(p)}` : '— 請選擇品項 —';
 }
 
 let pickingUid = null; // 正在幫哪一行選品項
@@ -405,7 +423,7 @@ function openPicker(uid) {
       <summary><span>${esc(g)}</span><small>${list.length} 支</small></summary>
       ${list.map((p) => `
         <button type="button" class="pk-item${cur === p ? ' on' : ''}" data-pick="${p.id}">
-          <b>${esc(codeOf(p))}</b><span>${esc(p.name)}<small>${esc(priceNote(p))}${isFruit(p) && stockText(p) ? `｜${stockText(p)}` : ''}</small></span>
+          <b>${esc(codeOf(p))}</b><span>${esc(shortName(p))}<small>${esc(priceNote(p))}${isFruit(p) && stockText(p) ? `｜${stockText(p)}` : ''}</small></span>
         </button>`).join('')}
     </details>`;
   }).join('');
