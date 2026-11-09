@@ -442,7 +442,7 @@ button:disabled { opacity: .55; cursor: wait; }
   .totals { gap: 14px; }
   .totals > div:nth-child(2) { display: none; } /* 手機上運費藏起來，省空間 */
   .totals .grand b { font-size: 20px; }
-  #resetBtn { display: none; }
+  #resetBtn { padding: 0 10px; } /* 手機也要能一次清空（業務填到一半客人不要了） */
   .btn-primary, .btn-ghost { padding: 0 14px; }
 
   /* 只改「畫面上」的明細；產生圖片用的 #renderBox 維持 800px 電腦版排版 */
