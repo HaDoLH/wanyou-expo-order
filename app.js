@@ -1308,7 +1308,7 @@ async function downloadDay() {
 
   const zip = new JSZip();
   const btn = $('#dlDayBtn');
-  const csv = [['訂單編號', '日期', '姓名', '電話', '統一編號', '經手人員', '狀態', '付款方式', '訂購品項', '總重KG', '總金額', '滿額贈品']];
+  const csv = [['訂單編號', '日期', '姓名', '狀態', '付款方式', '訂購品項', '總重KG', '總金額', '滿額贈品']];
   for (const [i, rec] of list.entries()) {
     btn.textContent = `處理中 ${i + 1}/${list.length}…`;
     exportRec = rec;
@@ -1316,7 +1316,7 @@ async function downloadDay() {
       const canvas = await renderCanvas(rec.order);
       zip.file(`${fileBase(rec.order)}.jpg`, await canvasToBlob(canvas, 'image/jpeg', 0.9));
       const c = rec.order.customer;
-      csv.push([rec.no, c.date, c.name, c.phone, c.tax, rec.staff, SALES_LABEL[rec.status],
+      csv.push([rec.no, c.date, c.name, SALES_LABEL[rec.status],
         paidMethodText(rec.order), itemsText(rec.order), rec.order.kg, rec.total, rec.order.gifts.join('、')]);
     } finally { exportRec = null; }
   }
