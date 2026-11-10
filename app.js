@@ -1284,6 +1284,20 @@ function fillListDates() {
   $('#listDate').value = defaultDate();
 }
 
+/** 訂購品項一行字：「代碼 品名 30KG、代碼 品名 500g/包 ×3、其他商品 2KG」 */
+function itemsText(o) {
+  const items = [];
+  o.rows.forEach((r) => {
+    if (r.first) items.push({ label: `${r.code || r.id} ${r.name}`, kg: 0, packs: [] });
+    const it = items[items.length - 1];
+    if (r.per) it.packs.push(r.spec); else it.kg += Number(r.kg) || 0; // 小包裝寫「規格×包數」，其他加總公斤
+  });
+  return [
+    ...items.map((it) => `${it.label} ${it.packs.length ? it.packs.join('＋') : it.kg + 'KG'}`),
+    ...o.extras.map((x) => `${x.name} ${x.kg}KG`),
+  ].join('、');
+}
+
 async function downloadDay() {
   const day = $('#listDate').value;
   const list = Object.values(live)
@@ -1294,7 +1308,7 @@ async function downloadDay() {
 
   const zip = new JSZip();
   const btn = $('#dlDayBtn');
-  const csv = [['訂單編號', '日期', '姓名', '電話', '統一編號', '經手人員', '狀態', '付款方式', '總重KG', '總金額', '滿額贈品']];
+  const csv = [['訂單編號', '日期', '姓名', '電話', '統一編號', '經手人員', '狀態', '付款方式', '訂購品項', '總重KG', '總金額', '滿額贈品']];
   for (const [i, rec] of list.entries()) {
     btn.textContent = `處理中 ${i + 1}/${list.length}…`;
     exportRec = rec;
@@ -1303,7 +1317,7 @@ async function downloadDay() {
       zip.file(`${fileBase(rec.order)}.jpg`, await canvasToBlob(canvas, 'image/jpeg', 0.9));
       const c = rec.order.customer;
       csv.push([rec.no, c.date, c.name, c.phone, c.tax, rec.staff, SALES_LABEL[rec.status],
-        paidMethodText(rec.order), rec.order.kg, rec.total, rec.order.gifts.join('、')]);
+        paidMethodText(rec.order), itemsText(rec.order), rec.order.kg, rec.total, rec.order.gifts.join('、')]);
     } finally { exportRec = null; }
   }
   // 開頭加 BOM，Excel 開中文才不會亂碼
