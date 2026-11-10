@@ -1284,7 +1284,7 @@ function fillListDates() {
   $('#listDate').value = defaultDate();
 }
 
-/** 訂購品項一行字：「代碼 品名 30KG、代碼 品名 500g/包 ×3、其他商品 2KG」 */
+/** 訂購品項：每個品項一行（同一格內換行）。生豆寫公斤、小包裝寫「規格 ×包數」、其他商品只寫「×數量」 */
 function itemsText(o) {
   const items = [];
   o.rows.forEach((r) => {
@@ -1294,8 +1294,8 @@ function itemsText(o) {
   });
   return [
     ...items.map((it) => `${it.label} ${it.packs.length ? it.packs.join('＋') : it.kg + 'KG'}`),
-    ...o.extras.map((x) => `${x.name} ${x.kg}KG`),
-  ].join('、');
+    ...o.extras.map((x) => `${x.name} ×${x.kg}`),
+  ].join('\n');
 }
 
 async function downloadDay() {
