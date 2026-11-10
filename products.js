@@ -78,7 +78,6 @@ const PRODUCTS = [
 
   // ---- 南美洲 ----
   { id: '21090153', code: 'BV001', group: '南美洲', name: '玻利維亞 伊莎貝爾莊園 羅沙里歐 藝妓 水洗', p5: 1900, pBag: 1870, bagKg: 20, bagUnit: '箱' },
-  { id: '21070956', code: 'CB048', group: '南美洲', name: '哥倫比亞 納里尼奧 卡杜拉 Excelso 水洗', p5: 320, pBag: 310, bagKg: 30, bagUnit: '箱' },
   { id: '21040880', code: 'CB005', group: '南美洲', name: '哥倫比亞 小飛象 水洗', p5: 390, pBag: 350, bagKg: 35, bagUnit: '袋' },
   { id: '21040879', code: 'CB018', group: '南美洲', name: '哥倫比亞 黑武士 厭氧日曬', p5: 510, pBag: 470, bagKg: 35, bagUnit: '袋' },
   { id: '21040860', code: 'CB019', group: '南美洲', name: '哥倫比亞 綠翡翠 薇拉產區 Supremo 水洗', p5: 380, pBag: 340, bagKg: 35, bagUnit: '袋' },
@@ -91,7 +90,6 @@ const PRODUCTS = [
   { id: '21080481', code: 'ET020', group: '非洲', name: '衣索比亞 西達馬 班莎 龐貝 日曬 G1', p5: 490, pBag: 480, bagKg: 30, bagUnit: '袋' },
   { id: '21080485', code: 'ET054', group: '非洲', name: '衣索比亞 谷吉 烏拉嘎 風信子 日曬 G1', p5: 520, pBag: 480, bagKg: 30, bagUnit: '袋' },
   { id: '21080447', code: 'ET050', group: '非洲', name: '衣索比亞 卡法 艾玫夏梅塔處理廠 水洗 TOP G2', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
-  { id: '21040883', code: 'ET016', group: '非洲', name: '衣索比亞 西達摩 G4 日曬', p5: 350, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
   { id: '21040869', code: 'KY022', group: '非洲', name: '肯亞 麒麟雅加 加古悠處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
   { id: '21040870', code: 'KY023', group: '非洲', name: '肯亞 涅里 迪麥處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
   { id: '21040871', code: 'KY024', group: '非洲', name: '肯亞 麒麟雅加 奇里處理廠 AA TOP 水洗', p5: 480, pBag: 470, bagKg: 30, bagUnit: '箱' },
