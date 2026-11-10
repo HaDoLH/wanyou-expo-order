@@ -1287,9 +1287,9 @@ function fillListDates() {
 async function downloadDay() {
   const day = $('#listDate').value;
   const list = Object.values(live)
-    .filter((o) => o.status !== 'deleted' && (!day || o.order.customer.date === day))
+    .filter((o) => o.status === 'paid' && (!day || o.order.customer.date === day)) // 只要付款成功的單
     .sort((a, b) => a.createdAt - b.createdAt);
-  if (!list.length) { toast('這一天沒有訂單'); return; }
+  if (!list.length) { toast('這一天沒有已付款的訂單'); return; }
   if (!window.JSZip) throw new Error('壓縮工具還沒載入，請確認網路後重新整理');
 
   const zip = new JSZip();
@@ -1300,7 +1300,7 @@ async function downloadDay() {
     exportRec = rec;
     try {
       const canvas = await renderCanvas(rec.order);
-      zip.file(`${fileBase(rec.order)}_${SALES_LABEL[rec.status]}.jpg`, await canvasToBlob(canvas, 'image/jpeg', 0.9));
+      zip.file(`${fileBase(rec.order)}.jpg`, await canvasToBlob(canvas, 'image/jpeg', 0.9));
       const c = rec.order.customer;
       csv.push([rec.no, c.date, c.name, c.phone, c.tax, rec.staff, SALES_LABEL[rec.status],
         paidMethodText(rec.order), rec.order.kg, rec.total, rec.order.gifts.join('、')]);
@@ -1309,8 +1309,8 @@ async function downloadDay() {
   // 開頭加 BOM，Excel 開中文才不會亂碼
   const text = '﻿' + csv.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
   zip.file('訂單總表.csv', text);
-  downloadBlob(await zip.generateAsync({ type: 'blob' }), `萬友訂單_${day || '全部日期'}.zip`);
-  toast(`✓ 已下載 ${list.length} 張訂單`, 3500);
+  downloadBlob(await zip.generateAsync({ type: 'blob' }), `萬友已付款訂單_${day || '全部日期'}.zip`);
+  toast(`✓ 已下載 ${list.length} 張已付款訂單`, 3500);
 }
 
 function paintListBtn() {

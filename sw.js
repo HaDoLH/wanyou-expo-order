@@ -3,14 +3,14 @@
    比喻：像把網頁「影印一份」放在平板裡，沒網路就看影印本。
    ⚠ 每次更新網站檔案，要把下面的版本號 +1，平板才會抓新版
    ========================================================= */
-const CACHE = 'wyx-v26';
+const CACHE = 'wyx-v27';
 
 const FILES = [
   './',
   './index.html',
   './style.css?v=18',
   './products.js?v=14',
-  './app.js?v=18',
+  './app.js?v=19',
   './sync.js?v=3',
   './manifest.webmanifest',
   './images/logo-256.png',
