@@ -3,20 +3,21 @@
    比喻：像把網頁「影印一份」放在平板裡，沒網路就看影印本。
    ⚠ 每次更新網站檔案，要把下面的版本號 +1，平板才會抓新版
    ========================================================= */
-const CACHE = 'wyx-v24';
+const CACHE = 'wyx-v25';
 
 const FILES = [
   './',
   './index.html',
-  './style.css?v=17',
-  './products.js?v=12',
-  './app.js?v=17',
+  './style.css?v=18',
+  './products.js?v=13',
+  './app.js?v=18',
   './sync.js?v=3',
   './manifest.webmanifest',
   './images/logo-256.png',
   './images/logo-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
 ];
 
 // 安裝：把檔案存起來

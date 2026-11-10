@@ -306,6 +306,8 @@ button:disabled { opacity: .55; cursor: wait; }
 
 /* 訂單列表 */
 .list-filters { display: grid; grid-template-columns: 1fr 160px; gap: 8px; margin-bottom: 12px; }
+.list-export { grid-template-columns: 1fr auto; } /* 下載列：按鈕依文字寬度 */
+#dlDayBtn { white-space: nowrap; }
 .order-row {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px;
   padding: 10px 12px; margin-bottom: 8px; text-align: left;

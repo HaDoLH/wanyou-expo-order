@@ -1134,7 +1134,10 @@ async function shareImage() {
 let live = {}; // 雲端全部訂單，用編號查
 
 // 只有自己送出過的單才讀雲端狀態；還沒送出的單就算編號撞到別人，也不會被當成對方那張
-const liveOf = (no) => (state.sent && state.orderNo === no ? live[no] : null);
+// 批次下載時，正在畫的那張單直接用它的雲端紀錄（印章、付款方式才會正確）
+let exportRec = null;
+const liveOf = (no) => (exportRec && exportRec.no === no ? exportRec
+  : state.sent && state.orderNo === no ? live[no] : null);
 
 function saveRecord(rec) {
   const list = store.get(KEY.orders, []);
@@ -1270,6 +1273,44 @@ function renderList() {
       <span class="order-main"><b>${esc(o.name)}</b><small>${esc(o.no)}｜${esc(o.staff) || '—'}</small></span>
       <span class="order-total">$${money(o.total)}</span>
     </button>`).join('') || '<p class="hint">目前沒有訂單</p>';
+}
+
+/* ---------- 一次下載某天全部訂單（給同事查詢） ----------
+   每張單畫成 JPG（跟客人拿到的圖一樣，含已付款／已作廢印章），
+   加一份「訂單總表.csv」（Excel 可開），全部打包成一個 ZIP。 */
+function fillListDates() {
+  $('#listDate').innerHTML = EXPO_DATES.map((d) => `<option value="${d}">${dateLabel(d)}</option>`).join('')
+    + '<option value="">全部日期</option>';
+  $('#listDate').value = defaultDate();
+}
+
+async function downloadDay() {
+  const day = $('#listDate').value;
+  const list = Object.values(live)
+    .filter((o) => o.status !== 'deleted' && (!day || o.order.customer.date === day))
+    .sort((a, b) => a.createdAt - b.createdAt);
+  if (!list.length) { toast('這一天沒有訂單'); return; }
+  if (!window.JSZip) throw new Error('壓縮工具還沒載入，請確認網路後重新整理');
+
+  const zip = new JSZip();
+  const btn = $('#dlDayBtn');
+  const csv = [['訂單編號', '日期', '姓名', '電話', '統一編號', '經手人員', '狀態', '付款方式', '總重KG', '總金額', '滿額贈品']];
+  for (const [i, rec] of list.entries()) {
+    btn.textContent = `處理中 ${i + 1}/${list.length}…`;
+    exportRec = rec;
+    try {
+      const canvas = await renderCanvas(rec.order);
+      zip.file(`${fileBase(rec.order)}_${SALES_LABEL[rec.status]}.jpg`, await canvasToBlob(canvas, 'image/jpeg', 0.9));
+      const c = rec.order.customer;
+      csv.push([rec.no, c.date, c.name, c.phone, c.tax, rec.staff, SALES_LABEL[rec.status],
+        paidMethodText(rec.order), rec.order.kg, rec.total, rec.order.gifts.join('、')]);
+    } finally { exportRec = null; }
+  }
+  // 開頭加 BOM，Excel 開中文才不會亂碼
+  const text = '﻿' + csv.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  zip.file('訂單總表.csv', text);
+  downloadBlob(await zip.generateAsync({ type: 'blob' }), `萬友訂單_${day || '全部日期'}.zip`);
+  toast(`✓ 已下載 ${list.length} 張訂單`, 3500);
 }
 
 function paintListBtn() {
@@ -1412,6 +1453,8 @@ function init() {
   $('#listBtn').addEventListener('click', () => { renderList(); showView('list'); });
   $('#listBack').addEventListener('click', showForm);
   $('#listStaff').addEventListener('change', renderList);
+  fillListDates();
+  $('#dlDayBtn').addEventListener('click', (e) => busy(e.currentTarget, downloadDay));
   $('#listSearch').addEventListener('input', renderList);
   $('#orderList').addEventListener('click', (e) => {
     const row = e.target.closest('.order-row');

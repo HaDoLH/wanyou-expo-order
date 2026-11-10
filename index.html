@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body class="locked">
 
@@ -213,6 +213,11 @@
       <input type="text" id="listSearch" placeholder="搜尋姓名、電話、訂單編號" aria-label="搜尋訂單" autocomplete="off">
       <select id="listStaff" aria-label="依經手人員篩選"></select>
     </div>
+    <!-- 當天結束後：一次下載這天的全部訂單（JPG 打包成 ZIP），給同事查詢 -->
+    <div class="list-filters list-export">
+      <select id="listDate" aria-label="選擇要下載的日期"></select>
+      <button type="button" class="btn-ghost" id="dlDayBtn">下載全部訂單（JPG）</button>
+    </div>
     <div id="orderList"></div>
   </main>
 
@@ -236,8 +241,9 @@
   <!-- 工具庫：html2canvas（網頁轉圖片）、jsPDF（產生 PDF） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="products.js?v=12"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="products.js?v=13"></script>
   <script src="sync.js?v=3"></script>
-  <script src="app.js?v=17"></script>
+  <script src="app.js?v=18"></script>
 </body>
 </html>
