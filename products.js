@@ -104,7 +104,6 @@ const PRODUCTS = [
   // ---- 海島・其他 ----
   { id: '21080472', code: 'IS001', group: '海島・其他', name: '印尼 曼特寧 G1 TP', p5: 420, pBag: 'quote', bagKg: 30, bagUnit: '袋' },
   { id: '21050141', code: 'IS003', group: '海島・其他', name: '印尼 瓦哈娜莊園 拉蘇娜 日曬', p5: 530, pBag: 520, bagKg: 30, bagUnit: '箱' },
-  { id: '21090140', code: 'HW001', group: '海島・其他', name: '夏威夷 海灣 可那 Extra Fancy 水洗', p5: 3250, pBag: null, bagKg: 30, bagUnit: '箱' },
   { id: '21080473', code: 'IS002', group: '海島・其他', name: '印尼 蘇門達臘 林東 托巴湖 藍眼 曼特寧 G1 TP', p5: 420, pBag: 410, bagKg: 30, bagUnit: '袋' },
 
   // ---- 高單價（小包裝） ----
